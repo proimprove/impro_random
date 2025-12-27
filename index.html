@@ -416,6 +416,13 @@
             );
         };
 
+        const RuleItem = ({ icon: Icon, text }) => (
+            <div className="flex gap-3 items-start">
+                <Icon className="text-yellow-400 shrink-0 mt-1" size={16} />
+                <span className="text-gray-200 text-sm font-medium leading-tight">{text}</span>
+            </div>
+        );
+
         function App() {
             // State
             const [screen, setScreen] = useState('onboarding'); 
@@ -488,12 +495,12 @@
                         }
                     }
                 } else {
-                    // Solo / Pitch
+                    // Solo
                     newSetup.goal = getText(getRandom(DICTIONARY.goalsSingle, settings.difficulty));
                 }
 
                 // Crazy Options Logic
-                const count = settings.mode === 'pitch' ? 1 : settings.crazyCount;
+                const count = settings.crazyCount;
                 for (let i = 0; i < count; i++) {
                     newSetup.crazies.push(getText(getRandom(DICTIONARY.crazyOptions, settings.difficulty)));
                 }
@@ -567,7 +574,15 @@
                         </div>
                     </div>
                     <h1 className="text-3xl font-black text-white mb-2 uppercase tracking-tight">Конструктор<br/><span className="text-yellow-400">Импровизатора</span></h1>
-                    <p className="text-gray-400 mb-8">Генератор сцен. Никаких "эээ... нуу...". Только экшн.</p>
+                    <p className="text-gray-400 mb-6">Генератор случайных сцен для тренировки спонтанности.</p>
+                    
+                    <div className="space-y-3 text-left bg-gray-800/50 p-5 rounded-2xl mb-8 border border-gray-700">
+                        <RuleItem icon={ArrowRight} text="Прими вводные. Не спорь с генератором." />
+                        <RuleItem icon={Play} text="Не объясняй — играй сразу." />
+                        <RuleItem icon={Target} text="Цель должна двигать сцену." />
+                        <RuleItem icon={AlertTriangle} text="Безумная опция — закон этого мира." />
+                    </div>
+
                     <Button onClick={() => setScreen('settings')} size="lg">Погнали</Button>
                 </div>
             );
@@ -591,12 +606,6 @@
                                     onClick={() => setSettings({...settings, mode: 'solo', duration: 60})}
                                     title="Монолог" 
                                     desc="1 актер. 60 сек." 
-                                />
-                                <ModeOption 
-                                    active={settings.mode === 'pitch'} 
-                                    onClick={() => setSettings({...settings, mode: 'pitch', duration: 30})}
-                                    title="Питч" 
-                                    desc="30 сек на всё." 
                                 />
                             </div>
                         </Section>
@@ -666,18 +675,25 @@
                             </div>
                         </Section>
 
-                        {/* Crazy Count */}
-                        <Section title="Твисты">
-                            <div className="flex gap-4 items-center bg-gray-800 p-2 rounded-xl w-fit">
-                                <button 
-                                    onClick={() => setSettings(s => ({...s, crazyCount: Math.max(0, s.crazyCount - 1)}))}
-                                    className="w-8 h-8 rounded-full bg-gray-600 text-white flex items-center justify-center font-bold"
-                                >-</button>
-                                <span className="text-lg font-bold w-4 text-center">{settings.crazyCount}</span>
-                                <button 
-                                    onClick={() => setSettings(s => ({...s, crazyCount: Math.min(2, s.crazyCount + 1)}))}
-                                    className="w-8 h-8 rounded-full bg-gray-600 text-white flex items-center justify-center font-bold"
-                                >+</button>
+                        {/* Crazy Options Toggle */}
+                        <Section title="Безумные опции">
+                            <div className="flex bg-gray-800 p-1 rounded-xl">
+                                <button
+                                    onClick={() => setSettings({...settings, crazyCount: 0})}
+                                    className={`flex-1 py-2 rounded-lg text-sm font-bold transition-all ${
+                                        settings.crazyCount === 0 ? 'bg-gray-600 text-white' : 'text-gray-500'
+                                    }`}
+                                >
+                                    Без опций
+                                </button>
+                                <button
+                                    onClick={() => setSettings({...settings, crazyCount: 1})}
+                                    className={`flex-1 py-2 rounded-lg text-sm font-bold transition-all ${
+                                        settings.crazyCount > 0 ? 'bg-yellow-500 text-black shadow' : 'text-gray-500'
+                                    }`}
+                                >
+                                    С опциями
+                                </button>
                             </div>
                         </Section>
                     </div>
@@ -730,7 +746,7 @@
                             </React.Fragment>
                         )}
 
-                        {settings.mode !== 'duo' && settings.mode !== 'pitch' && (
+                        {settings.mode !== 'duo' && (
                             <Card title="Цель" content={setup.goal} icon={Target} colorClass="border-orange-500" onReroll={() => reroll('goal')} />
                         )}
 
