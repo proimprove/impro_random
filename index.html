@@ -1,0 +1,871 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Конструктор Импровизатора</title>
+    
+    <!-- React & ReactDOM -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    
+    <!-- Babel for JSX -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <style>
+        /* Custom scrollbar hiding for horizontal lists */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        body {
+            background-color: #111827; /* gray-900 */
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useRef } = React;
+
+        // --- Icons (Inline Definitions to avoid CDN issues) ---
+        const IconBase = ({ size = 24, className = "", children }) => (
+            <svg 
+                xmlns="http://www.w3.org/2000/svg" 
+                width={size} 
+                height={size} 
+                viewBox="0 0 24 24" 
+                fill="none" 
+                stroke="currentColor" 
+                strokeWidth="2" 
+                strokeLinecap="round" 
+                strokeLinejoin="round" 
+                className={className}
+            >
+                {children}
+            </svg>
+        );
+
+        const Play = (props) => <IconBase {...props}><polygon points="5 3 19 12 5 21 5 3"></polygon></IconBase>;
+        const Pause = (props) => <IconBase {...props}><rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect></IconBase>;
+        const RefreshCw = (props) => <IconBase {...props}><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"></path><path d="M21 3v5h-5"></path><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"></path><path d="M8 16H3v5"></path></IconBase>;
+        const Zap = (props) => <IconBase {...props}><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></IconBase>;
+        const MapPin = (props) => <IconBase {...props}><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></IconBase>;
+        const User = (props) => <IconBase {...props}><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></IconBase>;
+        const Users = (props) => <IconBase {...props}><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M22 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></IconBase>;
+        const Target = (props) => <IconBase {...props}><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="6"></circle><circle cx="12" cy="12" r="2"></circle></IconBase>;
+        const ShieldAlert = (props) => <IconBase {...props}><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></IconBase>;
+        const ArrowRight = (props) => <IconBase {...props}><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></IconBase>;
+        const AlertTriangle = (props) => <IconBase {...props}><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></IconBase>;
+        const X = (props) => <IconBase {...props}><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></IconBase>;
+        const Star = (props) => <IconBase {...props}><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></IconBase>;
+
+        // --- Helper for Difficulty Mapping ---
+        const mapDiff = (d) => {
+            const val = parseInt(d);
+            if (val === 1) return 'easy';
+            if (val === 2) return 'normal';
+            if (val === 3) return 'hard';
+            return 'normal';
+        };
+
+        // --- Data Dictionaries ---
+        const DICTIONARY = {
+            locations: [
+                { text: "Кухня в коммуналке", category: "home", difficulty: "easy" },
+                { text: "Квартира-студия", category: "home", difficulty: "easy" },
+                { text: "Балкон с видом на двор", category: "home", difficulty: "easy" },
+                { text: "Подъезд с консьержем", category: "home", difficulty: "easy" },
+                { text: "Лифт", category: "home", difficulty: "easy" },
+                { text: "Лестничная площадка", category: "home", difficulty: "easy" },
+                { text: "Двор с детской площадкой", category: "home", difficulty: "easy" },
+                { text: "Гараж", category: "home", difficulty: "normal" },
+                { text: "Чердак", category: "home", difficulty: "normal" },
+                { text: "Подвал", category: "home", difficulty: "normal" },
+                { text: "Кладовка", category: "home", difficulty: "easy" },
+                { text: "Прачечная/химчистка", category: "city", difficulty: "easy" },
+                { text: "Пункт выдачи заказов", category: "city", difficulty: "easy" },
+                { text: "Кофейня у метро", category: "city", difficulty: "easy" },
+                { text: "Пекарня", category: "city", difficulty: "easy" },
+                { text: "Ночной магазин 24/7", category: "city", difficulty: "easy" },
+                { text: "Аптека", category: "city", difficulty: "easy" },
+                { text: "Стоматология", category: "city", difficulty: "normal" },
+                { text: "Поликлиника", category: "city", difficulty: "normal" },
+                { text: "МФЦ", category: "city", difficulty: "normal" },
+                { text: "Почта", category: "city", difficulty: "easy" },
+                { text: "Такси", category: "city", difficulty: "easy" },
+                { text: "Метро (вагон)", category: "city", difficulty: "easy" },
+                { text: "Перрон вокзала", category: "city", difficulty: "normal" },
+                { text: "Аэропорт (гейт)", category: "city", difficulty: "normal" },
+                { text: "Парк", category: "city", difficulty: "easy" },
+                { text: "Площадка для выгула собак", category: "city", difficulty: "easy" },
+                { text: "Фитнес-клуб", category: "city", difficulty: "easy" },
+                { text: "Салон красоты", category: "city", difficulty: "easy" },
+                { text: "Бар в пятницу вечером", category: "city", difficulty: "normal" },
+                { text: "Ресторан с белыми скатертями", category: "city", difficulty: "normal" },
+                { text: "Кинотеатр (фойе)", category: "culture", difficulty: "easy" },
+                { text: "Театр (закулисье)", category: "culture", difficulty: "normal" },
+                { text: "Музей (зал)", category: "culture", difficulty: "easy" },
+                { text: "Книжный магазин", category: "city", difficulty: "easy" },
+                { text: "Библиотека", category: "city", difficulty: "easy" },
+                { text: "Коворкинг", category: "work", difficulty: "easy" },
+                { text: "Опенспейс", category: "work", difficulty: "easy" },
+                { text: "Переговорка", category: "work", difficulty: "easy" },
+                { text: "Ресепшн офиса", category: "work", difficulty: "easy" },
+                { text: "Кабинет директора", category: "work", difficulty: "normal" },
+                { text: "Склад", category: "work", difficulty: "normal" },
+                { text: "Кухня в офисе", category: "work", difficulty: "easy" },
+                { text: "Колл-центр", category: "work", difficulty: "normal" },
+                { text: "Доставка (у двери клиента)", category: "work", difficulty: "easy" },
+                { text: "Стройка", category: "work", difficulty: "normal" },
+                { text: "Учительская", category: "work", difficulty: "normal" },
+                { text: "Класс", category: "work", difficulty: "easy" },
+                { text: "Университетская аудитория", category: "work", difficulty: "easy" },
+                { text: "Свадебный банкет", category: "events", difficulty: "normal" },
+                { text: "День рождения-сюрприз", category: "events", difficulty: "normal" },
+                { text: "Гримерка перед выступлением", category: "culture", difficulty: "normal" },
+                { text: "Сцена за минуту до выхода", category: "culture", difficulty: "hard" },
+                { text: "Пляж в ветреный день", category: "nature", difficulty: "easy" },
+                { text: "Лесная тропа", category: "nature", difficulty: "easy" },
+                { text: "Горный приют", category: "nature", difficulty: "normal" },
+                { text: "Палатка под дождём", category: "nature", difficulty: "normal" },
+                { text: "Подводная станция", category: "weird", difficulty: "hard" },
+                { text: "Космический корабль", category: "weird", difficulty: "hard" },
+                { text: "Отель для призраков", category: "weird", difficulty: "hard" },
+                { text: "Магазин времени", category: "weird", difficulty: "hard" },
+                { text: "Банк эмоций", category: "weird", difficulty: "hard" },
+                { text: "Театр, где зрители решают судьбу героя", category: "weird", difficulty: "hard" },
+                { text: "Суд по делам чувств", category: "weird", difficulty: "hard" },
+                { text: "Город без звуков", category: "weird", difficulty: "hard" },
+                { text: "Лаборатория смеха", category: "weird", difficulty: "hard" },
+                { text: "Комната ожидания “после жизни”", category: "weird", difficulty: "hard" }
+            ],
+            roles: [
+                { text: "Курьер", difficulty: "easy" },
+                { text: "Кассир", difficulty: "easy" },
+                { text: "Бариста", difficulty: "easy" },
+                { text: "Охранник", difficulty: "normal" },
+                { text: "Администратор ресепшн", difficulty: "easy" },
+                { text: "Менеджер по продажам", difficulty: "normal" },
+                { text: "HR-менеджер", difficulty: "normal" },
+                { text: "Проджект-менеджер", difficulty: "normal" },
+                { text: "Директор", difficulty: "normal" },
+                { text: "Стажёр", difficulty: "easy" },
+                { text: "Юрист", difficulty: "normal" },
+                { text: "Бухгалтер", difficulty: "normal" },
+                { text: "Маркетолог", difficulty: "normal" },
+                { text: "Дизайнер", difficulty: "normal" },
+                { text: "Программист", difficulty: "normal" },
+                { text: "Психолог", difficulty: "normal" },
+                { text: "Врач", difficulty: "normal" },
+                { text: "Фармацевт", difficulty: "easy" },
+                { text: "Учитель", difficulty: "easy" },
+                { text: "Студент", difficulty: "easy" },
+                { text: "Тренер", difficulty: "easy" },
+                { text: "Актёр", difficulty: "normal" },
+                { text: "Режиссёр", difficulty: "normal" },
+                { text: "Музыкант", difficulty: "normal" },
+                { text: "Ведущий мероприятия", difficulty: "normal" },
+                { text: "Невеста/жених", difficulty: "normal" },
+                { text: "Организатор", difficulty: "normal" },
+                { text: "Сосед(ка)", difficulty: "easy" },
+                { text: "Родитель", difficulty: "easy" },
+                { text: "Подросток", difficulty: "easy" },
+                { text: "Партнёр по отношениям", difficulty: "easy" },
+                { text: "Лучший друг", difficulty: "easy" },
+                { text: "Незнакомец в лифте", difficulty: "easy" },
+                { text: "Пассажир в такси", difficulty: "easy" },
+                { text: "Таксист", difficulty: "easy" },
+                { text: "Покупатель", difficulty: "easy" },
+                { text: "Клиент VIP", difficulty: "normal" },
+                { text: "Журналист", difficulty: "normal" },
+                { text: "Блогер", difficulty: "normal" },
+                { text: "Полицейский", difficulty: "normal" },
+                { text: "Следователь", difficulty: "normal" },
+                { text: "Судья", difficulty: "hard" },
+                { text: "Проводник", difficulty: "normal" },
+                { text: "Стюард(есса)", difficulty: "normal" },
+                { text: "Гид", difficulty: "normal" },
+                { text: "Спасатель", difficulty: "normal" },
+                { text: "Ученый", difficulty: "hard" },
+                { text: "Инопланетянин", difficulty: "hard" },
+                { text: "Робот-помощник", difficulty: "hard" },
+                { text: "Призрак", difficulty: "hard" },
+                { text: "Продавец времени", difficulty: "hard" },
+                { text: "Коллекционер эмоций", difficulty: "hard" }
+            ],
+            traits: [
+                { text: "Уверенный", type: "status", difficulty: "easy" },
+                { text: "Зажатый", type: "status", difficulty: "easy" },
+                { text: "Пафосный", type: "status", difficulty: "easy" },
+                { text: "Незаметный", type: "status", difficulty: "easy" },
+                { text: "Властный", type: "status", difficulty: "normal" },
+                { text: "Услужливый", type: "status", difficulty: "easy" },
+                { text: "Принципиальный", type: "status", difficulty: "normal" },
+                { text: "Хитрый", type: "status", difficulty: "normal" },
+                { text: "Наивный", type: "status", difficulty: "easy" },
+                { text: "Обидчивый", type: "emotion", difficulty: "easy" },
+                { text: "Ревнивый", type: "emotion", difficulty: "normal" },
+                { text: "Спокойный", type: "emotion", difficulty: "easy" },
+                { text: "Паникёр", type: "emotion", difficulty: "normal" },
+                { text: "Сверхвесёлый", type: "emotion", difficulty: "normal" },
+                { text: "Мрачный", type: "emotion", difficulty: "easy" },
+                { text: "Саркастичный", type: "quirk", difficulty: "normal" },
+                { text: "Чересчур честный", type: "quirk", difficulty: "normal" },
+                { text: "Всегда шепчет", type: "quirk", difficulty: "normal" },
+                { text: "Говорит только вопросами", type: "quirk", difficulty: "hard" },
+                { text: "Не может сказать “нет”", type: "quirk", difficulty: "normal" },
+                { text: "Постоянно оправдывается", type: "quirk", difficulty: "normal" },
+                { text: "Считает себя гением", type: "status", difficulty: "normal" },
+                { text: "Считает себя самозванцем", type: "status", difficulty: "normal" },
+                { text: "Говорит очень медленно", type: "quirk", difficulty: "normal" },
+                { text: "Говорит слишком быстро", type: "quirk", difficulty: "normal" },
+                { text: "Смеётся не к месту", type: "quirk", difficulty: "normal" },
+                { text: "Путает слова", type: "quirk", difficulty: "normal" },
+                { text: "Не выносит тишину", type: "quirk", difficulty: "normal" },
+                { text: "Боится правил", type: "emotion", difficulty: "normal" },
+                { text: "Обожает правила", type: "status", difficulty: "normal" },
+                { text: "Считает, что вокруг заговор", type: "emotion", difficulty: "hard" },
+                { text: "Скрывает секрет", type: "quirk", difficulty: "normal" },
+                { text: "Пытается понравиться всем", type: "status", difficulty: "normal" },
+                { text: "Постоянно торгуется", type: "quirk", difficulty: "normal" },
+                { text: "Вечно опаздывает", type: "quirk", difficulty: "normal" },
+                { text: "Слишком пунктуален", type: "quirk", difficulty: "normal" },
+                { text: "Вечно учит жизни", type: "status", difficulty: "normal" },
+                { text: "Говорит метафорами", type: "quirk", difficulty: "normal" },
+                { text: "Ведёт себя как в кино", type: "quirk", difficulty: "normal" },
+                { text: "Слишком вежливый", type: "status", difficulty: "easy" },
+                { text: "Грубит из страха", type: "emotion", difficulty: "normal" },
+                { text: "Сдерживает слёзы", type: "emotion", difficulty: "normal" },
+                { text: "Ищет одобрение", type: "status", difficulty: "normal" },
+                { text: "Никому не доверяет", type: "emotion", difficulty: "normal" },
+                { text: "Сразу доверяет всем", type: "emotion", difficulty: "normal" },
+                { text: "Считает деньги в голове", type: "quirk", difficulty: "normal" },
+                { text: "Держит лицо любой ценой", type: "status", difficulty: "normal" },
+                { text: "Не умеет врать", type: "quirk", difficulty: "normal" },
+                { text: "Врёт легко и красиво", type: "quirk", difficulty: "hard" },
+                { text: "Ставит диагнозы всем вокруг", type: "quirk", difficulty: "normal" },
+                { text: "Слышит “не то”", type: "quirk", difficulty: "normal" },
+                { text: "Отвечает слишком прямо", type: "quirk", difficulty: "normal" },
+                { text: "Извиняется заранее", type: "quirk", difficulty: "normal" },
+                { text: "Говорит “мы” вместо “я”", type: "quirk", difficulty: "normal" },
+                { text: "Срывается на мелочах", type: "emotion", difficulty: "normal" },
+                { text: "Слишком расслаблен", type: "emotion", difficulty: "easy" },
+                { text: "Слишком напряжён", type: "emotion", difficulty: "easy" }
+            ],
+            goalsSingle: [
+                { text: "Убедить другого остаться ещё на 5 минут", difficulty: "easy" },
+                { text: "Убедить другого уйти прямо сейчас", difficulty: "easy" },
+                { text: "Доказать свою правоту любым способом", difficulty: "normal" },
+                { text: "Извиниться так, чтобы тебе поверили", difficulty: "easy" },
+                { text: "Скрыть, что ты виноват(а)", difficulty: "normal" },
+                { text: "Вывести другого на признание", difficulty: "normal" },
+                { text: "Попросить услугу, не унизившись", difficulty: "easy" },
+                { text: "Отказать и не поссориться", difficulty: "easy" },
+                { text: "Сделать предложение, не получив отказ", difficulty: "normal" },
+                { text: "Разорвать отношения “по-хорошему”", difficulty: "normal" },
+                { text: "Продать идею/проект за 1 минуту", difficulty: "normal" },
+                { text: "Выбить скидку, не выглядя жадным", difficulty: "easy" },
+                { text: "Получить доступ/пропуск/разрешение", difficulty: "easy" },
+                { text: "Не пустить другого, соблюдая правила", difficulty: "normal" },
+                { text: "Вернуть долг, не разрушив отношения", difficulty: "normal" },
+                { text: "Попросить в долг, сохранив статус", difficulty: "normal" },
+                { text: "Договориться о переносе срока", difficulty: "normal" },
+                { text: "Скрыть, что ты ничего не сделал(а)", difficulty: "normal" },
+                { text: "Успокоить человека в панике", difficulty: "normal" },
+                { text: "Заставить другого успокоиться (жёстко)", difficulty: "normal" },
+                { text: "Получить комплимент, не выпрашивая", difficulty: "easy" },
+                { text: "Сохранить лицо после ошибки", difficulty: "normal" },
+                { text: "Вынудить другого признать твой авторитет", difficulty: "hard" },
+                { text: "Показать, что ты главный(ая)", difficulty: "hard" },
+                { text: "Сделать так, чтобы другой взял ответственность", difficulty: "normal" },
+                { text: "Переложить ответственность незаметно", difficulty: "hard" },
+                { text: "Уговорить на риск, риск при этом тебе страшен", difficulty: "normal" },
+                { text: "Отговорить от риска, хотя тебе выгодно", difficulty: "hard" },
+                { text: "Срочно найти потерянную вещь", difficulty: "easy" },
+                { text: "Удержать информацию в секрете", difficulty: "normal" },
+                { text: "Выведать пароль/код", difficulty: "hard" },
+                { text: "Сохранить тайну друга", difficulty: "normal" },
+                { text: "Попросить прощения, но не признавать вину", difficulty: "hard" },
+                { text: "Сказать правду, которая разрушит планы", difficulty: "hard" },
+                { text: "Сделать вид, что всё под контролем", difficulty: "normal" },
+                { text: "Попросить повысить оплату/зарплату", difficulty: "normal" },
+                { text: "Снизить цену, сохранив уважение", difficulty: "normal" },
+                { text: "Убедить, что ты “свой”", difficulty: "normal" },
+                { text: "Проверить, можно ли доверять человеку", difficulty: "normal" },
+                { text: "Оправдать своё поведение без оправданий", difficulty: "normal" },
+                { text: "Выиграть спор, не повышая голос", difficulty: "normal" },
+                { text: "Заставить человека улыбнуться", difficulty: "easy" },
+                { text: "Заставить человека замолчать", difficulty: "normal" },
+                { text: "Договориться о правилах “на берегу”", difficulty: "normal" },
+                { text: "Срочно получить помощь", difficulty: "easy" },
+                { text: "Не дать втянуть себя в чужую драму", difficulty: "normal" },
+                { text: "Сделать так, чтобы другой сделал первый шаг", difficulty: "normal" },
+                { text: "Соблазнить через интеллект", difficulty: "hard" },
+                { text: "Сохранить нейтралитет в конфликте", difficulty: "normal" },
+                { text: "Выяснить “что между нами”", difficulty: "normal" },
+                { text: "Убедить купить прямо сейчас", difficulty: "normal" },
+                { text: "Отстоять возврат/компенсацию", difficulty: "normal" },
+                { text: "Вынудить другого назвать цену первым", difficulty: "hard" },
+                { text: "Сделать так, чтобы другой согласился на твою версию", difficulty: "normal" }
+            ],
+            goalsPairs: [
+                { a: "Убедить подписать договор", b: "Не подписывать без гарантий", difficulty: "normal" },
+                { a: "Получить доступ прямо сейчас", b: "Соблюсти регламент и не пустить", difficulty: "normal" },
+                { a: "Сохранить лицо после ошибки", b: "Публично указать на ошибку", difficulty: "normal" },
+                { a: "Попросить в долг", b: "Отказать и не выглядеть жадным", difficulty: "normal" },
+                { a: "Убедить остаться", b: "Уйти как можно быстрее", difficulty: "easy" },
+                { a: "Сказать правду", b: "Скрыть правду ради выгоды", difficulty: "hard" },
+                { a: "Продать идею за минуту", b: "Разнести идею и остановить", difficulty: "normal" },
+                { a: "Добиться признания", b: "Не признаться ни при каких условиях", difficulty: "normal" },
+                { a: "Успокоить человека", b: "Разогнать конфликт и “встряхнуть”", difficulty: "normal" },
+                { a: "Договориться о переносе сроков", b: "Не переносить сроки и давить", difficulty: "normal" },
+                { a: "Уговорить на риск", b: "Остановить и защитить", difficulty: "normal" },
+                { a: "Выяснить отношения", b: "Свести всё к шутке и уйти", difficulty: "normal" },
+                { a: "Получить скидку", b: "Не давать скидку из принципа", difficulty: "normal" },
+                { a: "Убедить, что ты “свой”", b: "Проверить и не доверять", difficulty: "normal" },
+                { a: "Сделать предложение", b: "Не брать обязательств", difficulty: "normal" },
+                { a: "Попросить повышения", b: "Сэкономить бюджет любой ценой", difficulty: "normal" },
+                { a: "Заставить признать авторитет", b: "Снизить чужой статус и доминировать", difficulty: "hard" },
+                { a: "Сохранить тайну", b: "Вытащить секрет ради правды", difficulty: "hard" },
+                { a: "Отстоять возврат", b: "Не возвращать деньги по правилам", difficulty: "normal" },
+                { a: "Сделать первый шаг к примирению", b: "Отказаться мириться из гордости", difficulty: "normal" }
+            ],
+            goalsShared: [
+                { goal: "Успеть на поезд/самолёт", obstacle: "Один постоянно отвлекается разговорами", difficulty: "normal" },
+                { goal: "Скрыть проблему от третьего лица", obstacle: "Третье лицо вот-вот войдёт", difficulty: "normal" },
+                { goal: "Срочно найти пропавшую вещь", obstacle: "Никто не признаётся, кто брал", difficulty: "normal" },
+                { goal: "Отрепетировать выступление", obstacle: "Время заканчивается и все нервничают", difficulty: "normal" },
+                { goal: "Сделать “идеальный” сервис клиенту", obstacle: "Клиент провоцирует и хамит", difficulty: "normal" },
+                { goal: "Спасти мероприятие от провала", obstacle: "Организатор в панике и обвиняет всех", difficulty: "normal" },
+                { goal: "Выжить в странном мире", obstacle: "Здесь другие законы (например, нельзя говорить “нет”)", difficulty: "hard" },
+                { goal: "Договориться о совместных правилах", obstacle: "Оба боятся потерять свободу", difficulty: "normal" },
+                { goal: "Доказать, что вы команда", obstacle: "Вас проверяют и провоцируют на конфликт", difficulty: "hard" },
+                { goal: "Удержать контроль над ситуацией", obstacle: "Никто не имеет полной информации", difficulty: "hard" },
+                { goal: "Устроить сюрприз", obstacle: "Один хочет сорвать ради “правды”", difficulty: "normal" },
+                { goal: "Провести переговоры", obstacle: "Каждый слышит по-своему и интерпретирует", difficulty: "normal" },
+                { goal: "Сделать “продающий” питч", obstacle: "В аудитории скептик, который перебивает", difficulty: "normal" },
+                { goal: "Дойти до пункта назначения", obstacle: "Сбой навигации/карты и спор о маршруте", difficulty: "normal" },
+                { goal: "Снять напряжение в группе", obstacle: "Скрытый конфликт выходит наружу", difficulty: "hard" }
+            ],
+            crazyOptions: [
+                { text: "Нельзя использовать букву 'А'", type: "speech", difficulty: "hard" },
+                { text: "Ты всё время смеешься", type: "emotion", difficulty: "easy" },
+                { text: "Твои руки живут своей жизнью", type: "physical", difficulty: "normal" },
+                { text: "Каждая фраза — это вопрос", type: "speech", difficulty: "normal" },
+                { text: "Ты думаешь, что всё вокруг — сон", type: "mental", difficulty: "hard" },
+                { text: "Нужно касаться собеседника каждые 5 сек", type: "physical", difficulty: "normal" },
+                { text: "Время идет задом наперед (отыграй)", type: "world", difficulty: "hard" },
+                { text: "Пол — это лава", type: "physical", difficulty: "easy" },
+                { text: "Ты говоришь стихами", type: "speech", difficulty: "hard" },
+                { text: "Ты мгновенно забываешь, что сказал", type: "mental", difficulty: "normal" },
+            ]
+        };
+
+        // --- Components ---
+
+        const Card = ({ title, content, icon: Icon, colorClass, onReroll, showReroll = true }) => (
+            <div className={`relative p-4 rounded-xl border-l-4 shadow-sm bg-gray-800 border-gray-700 ${colorClass} mb-3 transition-all hover:scale-[1.01]`}>
+                <div className="flex justify-between items-start mb-2">
+                    <div className="flex items-center gap-2 text-gray-400 text-xs uppercase tracking-wider font-semibold">
+                        <Icon size={14} />
+                        {title}
+                    </div>
+                    {showReroll && (
+                        <button onClick={onReroll} className="text-gray-500 hover:text-white transition-colors p-1">
+                            <RefreshCw size={14} />
+                        </button>
+                    )}
+                </div>
+                <div className="text-lg font-medium text-gray-100 leading-snug">
+                    {content}
+                </div>
+            </div>
+        );
+
+        const Button = ({ children, onClick, variant = 'primary', className = '', disabled = false, size = 'md' }) => {
+            const baseStyles = "font-bold rounded-full transition-all active:scale-95 flex items-center justify-center gap-2";
+            const variants = {
+                primary: "bg-yellow-400 text-black hover:bg-yellow-300 shadow-[0_0_15px_rgba(250,204,21,0.3)] disabled:opacity-50 disabled:shadow-none",
+                secondary: "bg-gray-700 text-white hover:bg-gray-600 border border-gray-600",
+                danger: "bg-red-500/20 text-red-200 border border-red-500/50 hover:bg-red-500/30",
+                ghost: "bg-transparent text-gray-400 hover:text-white",
+                outline: "border-2 border-yellow-400/50 text-yellow-400 hover:bg-yellow-400/10"
+            };
+            const sizes = {
+                sm: "px-3 py-1 text-sm",
+                md: "px-6 py-3 text-base",
+                lg: "px-8 py-4 text-lg w-full"
+            };
+
+            return (
+                <button 
+                    onClick={onClick} 
+                    disabled={disabled}
+                    className={`${baseStyles} ${variants[variant]} ${sizes[size]} ${className}`}
+                >
+                    {children}
+                </button>
+            );
+        };
+
+        function App() {
+            // State
+            const [screen, setScreen] = useState('onboarding'); 
+            const [settings, setSettings] = useState({
+                mode: 'duo', 
+                duration: 60,
+                difficulty: 'normal',
+                crazyCount: 1,
+                goalMode: 'dual' 
+            });
+            const [setup, setSetup] = useState(null);
+            const [timeLeft, setTimeLeft] = useState(0);
+            const [isRunning, setIsRunning] = useState(false);
+            const [isPremium, setIsPremium] = useState(false);
+
+            const timerRef = useRef(null);
+
+            // Helper: Random item picker
+            const getRandom = (list, diff) => {
+                let pool = list;
+                if (diff === 'easy') {
+                    pool = list.filter(i => i.difficulty === 'easy');
+                } else if (diff === 'normal') {
+                    pool = list.filter(i => i.difficulty !== 'hard');
+                }
+                const item = pool[Math.floor(Math.random() * pool.length)];
+                return item ? item : null;
+            };
+
+            const getText = (item) => item ? item.text : "Данные не найдены";
+
+            const generateCharacter = () => {
+                const role = getRandom(DICTIONARY.roles, settings.difficulty);
+                const trait = getRandom(DICTIONARY.traits, settings.difficulty);
+                return `${getText(role)} (${getText(trait)})`;
+            };
+
+            // Action: Generate Full Setup
+            const generateSetup = () => {
+                const newSetup = {
+                    location: getText(getRandom(DICTIONARY.locations, settings.difficulty)),
+                    charA: generateCharacter(),
+                    charB: settings.mode === 'duo' ? generateCharacter() : null,
+                    crazies: [],
+                    mode: settings.mode,
+                    goalMode: settings.goalMode
+                };
+
+                // Goals Logic
+                if (settings.mode === 'duo') {
+                    if (settings.goalMode === 'dual') {
+                        // CONFLICT MODE
+                        const pair = getRandom(DICTIONARY.goalsPairs, settings.difficulty);
+                        if (pair) {
+                            newSetup.goalA = pair.a;
+                            newSetup.goalB = pair.b;
+                        } else {
+                            newSetup.goalA = getText(getRandom(DICTIONARY.goalsSingle, settings.difficulty));
+                            newSetup.goalB = getText(getRandom(DICTIONARY.goalsSingle, settings.difficulty));
+                        }
+                    } else {
+                        // SHARED MODE
+                        const combo = getRandom(DICTIONARY.goalsShared, settings.difficulty);
+                        if (combo) {
+                            newSetup.sharedGoal = combo.goal;
+                            newSetup.obstacle = combo.obstacle;
+                        } else {
+                            newSetup.sharedGoal = "Выжить";
+                            newSetup.obstacle = "Что-то пошло не так";
+                        }
+                    }
+                } else {
+                    // Solo / Pitch
+                    newSetup.goal = getText(getRandom(DICTIONARY.goalsSingle, settings.difficulty));
+                }
+
+                // Crazy Options Logic
+                const count = settings.mode === 'pitch' ? 1 : settings.crazyCount;
+                for (let i = 0; i < count; i++) {
+                    newSetup.crazies.push(getText(getRandom(DICTIONARY.crazyOptions, settings.difficulty)));
+                }
+
+                setSetup(newSetup);
+            };
+
+            const handleStartGame = () => {
+                generateSetup();
+                setScreen('generation');
+            };
+
+            const handleStartScene = () => {
+                setTimeLeft(settings.duration);
+                setIsRunning(true);
+                setScreen('scene');
+            };
+
+            // Timer Effect
+            useEffect(() => {
+                if (isRunning && timeLeft > 0) {
+                    timerRef.current = setInterval(() => {
+                        setTimeLeft((prev) => prev - 1);
+                    }, 1000);
+                } else if (timeLeft === 0 && isRunning) {
+                    setIsRunning(false);
+                    if (timerRef.current) clearInterval(timerRef.current);
+                }
+                return () => clearInterval(timerRef.current);
+            }, [isRunning, timeLeft]);
+
+            // Reroll Handlers
+            const reroll = (key) => {
+                setSetup(prev => {
+                    let newVal;
+                    if (key.includes('char')) {
+                        newVal = generateCharacter();
+                    } 
+                    else if (key === 'location') {
+                        newVal = getText(getRandom(DICTIONARY.locations, settings.difficulty));
+                    }
+                    else if (key === 'goal' || key === 'goalA' || key === 'goalB') {
+                        newVal = getText(getRandom(DICTIONARY.goalsSingle, settings.difficulty));
+                    }
+                    else if (key === 'sharedGoal') {
+                        const combo = getRandom(DICTIONARY.goalsShared, settings.difficulty);
+                        newVal = combo ? combo.goal : "Цель";
+                    }
+                    else if (key === 'obstacle') {
+                        const combo = getRandom(DICTIONARY.goalsShared, settings.difficulty);
+                        newVal = combo ? combo.obstacle : "Препятствие";
+                    }
+                    
+                    return { ...prev, [key]: newVal };
+                });
+            };
+
+            const rerollCrazy = (index) => {
+                const newCrazies = [...setup.crazies];
+                newCrazies[index] = getText(getRandom(DICTIONARY.crazyOptions, settings.difficulty));
+                setSetup(prev => ({ ...prev, crazies: newCrazies }));
+            };
+
+            // --- Screens ---
+
+            const OnboardingScreen = () => (
+                <div className="flex flex-col h-full p-6 text-center justify-center max-w-md mx-auto">
+                    <div className="mb-6 flex justify-center">
+                        <div className="bg-yellow-400 p-4 rounded-full shadow-[0_0_20px_rgba(250,204,21,0.4)]">
+                            <Zap size={40} className="text-black" />
+                        </div>
+                    </div>
+                    <h1 className="text-3xl font-black text-white mb-2 uppercase tracking-tight">Конструктор<br/><span className="text-yellow-400">Импровизатора</span></h1>
+                    <p className="text-gray-400 mb-8">Генератор сцен. Никаких "эээ... нуу...". Только экшн.</p>
+                    <Button onClick={() => setScreen('settings')} size="lg">Погнали</Button>
+                </div>
+            );
+
+            const SettingsScreen = () => (
+                <div className="flex flex-col h-full p-6 max-w-md mx-auto">
+                    <Header title="Настройки" onBack={() => setScreen('onboarding')} />
+                    
+                    <div className="space-y-8 flex-1 overflow-y-auto py-4 no-scrollbar">
+                        {/* Mode Selection */}
+                        <Section title="Режим игры">
+                            <div className="grid grid-cols-1 gap-3">
+                                <ModeOption 
+                                    active={settings.mode === 'duo'} 
+                                    onClick={() => setSettings({...settings, mode: 'duo', duration: 120})}
+                                    title="Сцена вдвоем" 
+                                    desc="Классика. 2 актера." 
+                                />
+                                <ModeOption 
+                                    active={settings.mode === 'solo'} 
+                                    onClick={() => setSettings({...settings, mode: 'solo', duration: 60})}
+                                    title="Монолог" 
+                                    desc="1 актер. 60 сек." 
+                                />
+                                <ModeOption 
+                                    active={settings.mode === 'pitch'} 
+                                    onClick={() => setSettings({...settings, mode: 'pitch', duration: 30})}
+                                    title="Питч" 
+                                    desc="30 сек на всё." 
+                                />
+                            </div>
+                        </Section>
+
+                        {/* Goal Mode (Only for DUO) */}
+                        {settings.mode === 'duo' && (
+                            <Section title="Тип взаимодействия">
+                                <div className="bg-gray-800 p-1 rounded-xl flex">
+                                    <button
+                                        onClick={() => setSettings({...settings, goalMode: 'dual'})}
+                                        className={`flex-1 py-3 rounded-lg text-sm font-bold flex flex-col items-center gap-1 transition-all ${
+                                            settings.goalMode === 'dual' ? 'bg-gray-600 text-white shadow' : 'text-gray-500'
+                                        }`}
+                                    >
+                                        <span className="flex items-center gap-2"><Users size={16}/> Конфликт</span>
+                                    </button>
+                                    <button
+                                        onClick={() => setSettings({...settings, goalMode: 'shared'})}
+                                        className={`flex-1 py-3 rounded-lg text-sm font-bold flex flex-col items-center gap-1 transition-all ${
+                                            settings.goalMode === 'shared' ? 'bg-gray-600 text-white shadow' : 'text-gray-500'
+                                        }`}
+                                    >
+                                        <span className="flex items-center gap-2"><ShieldAlert size={16}/> Команда</span>
+                                    </button>
+                                </div>
+                                <p className="text-xs text-gray-500 mt-2 px-1">
+                                    {settings.goalMode === 'dual' 
+                                        ? "💡 Две разные цели создают напряжение." 
+                                        : "🤝 Общая цель + препятствие. Работайте сообща."}
+                                </p>
+                            </Section>
+                        )}
+
+                        {/* Complexity */}
+                        <Section title="Сложность">
+                            <div className="flex bg-gray-800 p-1 rounded-xl">
+                                {['easy', 'normal', 'hard'].map((lvl) => (
+                                    <button
+                                        key={lvl}
+                                        onClick={() => setSettings({...settings, difficulty: lvl})}
+                                        className={`flex-1 py-2 rounded-lg text-sm font-bold capitalize transition-all ${
+                                            settings.difficulty === lvl ? 'bg-gray-600 text-white' : 'text-gray-500'
+                                        }`}
+                                    >
+                                        {lvl === 'easy' ? 'Лайт' : lvl === 'normal' ? 'Норм' : 'Дичь'}
+                                    </button>
+                                ))}
+                            </div>
+                        </Section>
+
+                        {/* Duration */}
+                        <Section title="Таймер">
+                            <div className="flex gap-2 overflow-x-auto pb-2 no-scrollbar">
+                                {[30, 60, 90, 120, 180].map(sec => (
+                                    <button
+                                        key={sec}
+                                        onClick={() => setSettings({...settings, duration: sec})}
+                                        className={`w-14 h-14 shrink-0 rounded-full font-bold flex items-center justify-center border-2 transition-all ${
+                                            settings.duration === sec 
+                                                ? 'border-yellow-400 text-yellow-400 bg-yellow-400/10' 
+                                                : 'border-gray-700 text-gray-500'
+                                        }`}
+                                    >
+                                        {sec}
+                                    </button>
+                                ))}
+                            </div>
+                        </Section>
+
+                        {/* Crazy Count */}
+                        <Section title="Твисты">
+                            <div className="flex gap-4 items-center bg-gray-800 p-2 rounded-xl w-fit">
+                                <button 
+                                    onClick={() => setSettings(s => ({...s, crazyCount: Math.max(0, s.crazyCount - 1)}))}
+                                    className="w-8 h-8 rounded-full bg-gray-600 text-white flex items-center justify-center font-bold"
+                                >-</button>
+                                <span className="text-lg font-bold w-4 text-center">{settings.crazyCount}</span>
+                                <button 
+                                    onClick={() => setSettings(s => ({...s, crazyCount: Math.min(2, s.crazyCount + 1)}))}
+                                    className="w-8 h-8 rounded-full bg-gray-600 text-white flex items-center justify-center font-bold"
+                                >+</button>
+                            </div>
+                        </Section>
+                    </div>
+
+                    <Button onClick={handleStartGame} size="lg" className="mt-4 shadow-xl">
+                        Сгенерировать
+                    </Button>
+                </div>
+            );
+
+            const ModeOption = ({ title, desc, active, onClick }) => (
+                <div 
+                    onClick={onClick}
+                    className={`p-4 rounded-xl border-2 cursor-pointer transition-all ${
+                        active ? 'border-yellow-400 bg-gray-800' : 'border-gray-700 hover:border-gray-600 bg-gray-800/30'
+                    }`}
+                >
+                    <div className="flex justify-between items-center mb-1">
+                        <span className={`font-bold ${active ? 'text-white' : 'text-gray-400'}`}>{title}</span>
+                        {active && <div className="w-3 h-3 bg-yellow-400 rounded-full shadow-[0_0_8px_rgba(250,204,21,0.8)]" />}
+                    </div>
+                    <p className="text-xs text-gray-500 leading-relaxed">{desc}</p>
+                </div>
+            );
+
+            const GenerationScreen = () => (
+                <div className="flex flex-col h-full p-6 max-w-md mx-auto">
+                    <Header title="Сценарий" onBack={() => setScreen('settings')} />
+                    
+                    <div className="flex-1 overflow-y-auto py-2 space-y-1 no-scrollbar">
+                        <Card title="Локация" content={setup.location} icon={MapPin} colorClass="border-blue-500" onReroll={() => reroll('location')} />
+
+                        <Card title="Персонаж А" content={setup.charA} icon={User} colorClass="border-emerald-500" onReroll={() => reroll('charA')} />
+
+                        {settings.mode === 'duo' && (
+                            <Card title="Персонаж Б" content={setup.charB} icon={User} colorClass="border-emerald-500" onReroll={() => reroll('charB')} />
+                        )}
+
+                        {settings.mode === 'duo' && settings.goalMode === 'dual' && (
+                            <React.Fragment>
+                                <Card title="Цель (Персонаж А)" content={setup.goalA} icon={Target} colorClass="border-orange-500" onReroll={() => reroll('goalA')} />
+                                <Card title="Цель (Персонаж Б)" content={setup.goalB} icon={Target} colorClass="border-orange-500" onReroll={() => reroll('goalB')} />
+                            </React.Fragment>
+                        )}
+
+                        {settings.mode === 'duo' && settings.goalMode === 'shared' && (
+                            <React.Fragment>
+                                <Card title="Общая цель" content={setup.sharedGoal} icon={Users} colorClass="border-cyan-500" onReroll={() => reroll('sharedGoal')} />
+                                <Card title="Препятствие / Ставка" content={setup.obstacle} icon={ShieldAlert} colorClass="border-red-500" onReroll={() => reroll('obstacle')} />
+                            </React.Fragment>
+                        )}
+
+                        {settings.mode !== 'duo' && settings.mode !== 'pitch' && (
+                            <Card title="Цель" content={setup.goal} icon={Target} colorClass="border-orange-500" onReroll={() => reroll('goal')} />
+                        )}
+
+                        {setup.crazies.map((crazy, idx) => (
+                            <Card key={idx} title={`Твист #${idx+1}`} content={crazy} icon={Zap} colorClass="border-purple-500" onReroll={() => rerollCrazy(idx)} />
+                        ))}
+                    </div>
+
+                    <div className="mt-4 grid grid-cols-2 gap-3">
+                        <Button variant="secondary" onClick={generateSetup} size="md">
+                            <RefreshCw size={18} /> Всё
+                        </Button>
+                        <Button onClick={handleStartScene} size="md" className="col-span-1">
+                            <Play size={18} /> Старт
+                        </Button>
+                    </div>
+                </div>
+            );
+
+            const SceneScreen = () => {
+                let timerColor = 'text-white';
+                if (timeLeft < 10) timerColor = 'text-red-500 animate-pulse';
+                else if (timeLeft < 30) timerColor = 'text-yellow-400';
+
+                const formatTime = (seconds) => {
+                    const m = Math.floor(seconds / 60);
+                    const s = seconds % 60;
+                    return `${m}:${s < 10 ? '0' : ''}${s}`;
+                };
+
+                return (
+                    <div className="flex flex-col h-full bg-black relative overflow-hidden">
+                        <div 
+                            className="absolute top-0 left-0 h-2 bg-yellow-400 transition-all duration-1000 linear z-50"
+                            style={{ width: `${(timeLeft / settings.duration) * 100}%` }}
+                        />
+
+                        <div className="flex-1 flex flex-col items-center justify-center p-6 z-10">
+                            <div className={`text-8xl font-black mb-8 font-mono ${timerColor}`}>
+                                {timeLeft > 0 ? formatTime(timeLeft) : "СТОП"}
+                            </div>
+
+                            {!isRunning && timeLeft === 0 && (
+                                <div className="bg-gray-800 px-6 py-3 rounded-full text-white font-bold animate-bounce mb-8">
+                                    Сцена завершена! 👏
+                                </div>
+                            )}
+
+                            <div className="w-full max-w-md bg-gray-900/80 backdrop-blur border border-gray-800 rounded-xl p-4 text-left space-y-3 opacity-80 hover:opacity-100 transition-opacity">
+                                <CompactItem icon={MapPin} text={setup.location} color="text-blue-400" />
+                                <CompactItem icon={User} text={`${setup.charA} / ${setup.charB || ''}`} color="text-emerald-400" />
+                                
+                                {setup.goalMode === 'dual' && setup.mode === 'duo' && (
+                                    <React.Fragment>
+                                        <CompactItem icon={Target} text={`А: ${setup.goalA}`} color="text-orange-400" />
+                                        <CompactItem icon={Target} text={`Б: ${setup.goalB}`} color="text-orange-400" />
+                                    </React.Fragment>
+                                )}
+
+                                {setup.goalMode === 'shared' && setup.mode === 'duo' && (
+                                    <React.Fragment>
+                                        <CompactItem icon={Users} text={setup.sharedGoal} color="text-cyan-400" />
+                                        <CompactItem icon={ShieldAlert} text={setup.obstacle} color="text-red-400" />
+                                    </React.Fragment>
+                                )}
+
+                                {setup.mode !== 'duo' && setup.goal && <CompactItem icon={Target} text={setup.goal} color="text-orange-400" />}
+
+                                {setup.crazies.map((c, i) => (
+                                    <CompactItem key={i} icon={Zap} text={c} color="text-purple-400" />
+                                ))}
+                            </div>
+                        </div>
+
+                        <div className="p-6 pb-8 bg-gradient-to-t from-black via-black to-transparent z-20">
+                            <div className="grid grid-cols-3 gap-4 max-w-md mx-auto">
+                                {timeLeft === 0 ? (
+                                    <Button onClick={() => setScreen('generation')} variant="secondary" className="col-span-1">Настройки</Button>
+                                ) : (
+                                    <Button onClick={() => setIsRunning(!isRunning)} variant="secondary">
+                                        {isRunning ? <Pause /> : <Play />}
+                                    </Button>
+                                )}
+                                
+                                {timeLeft === 0 ? (
+                                    <Button onClick={() => {setTimeLeft(settings.duration); setIsRunning(true);}} className="col-span-2">Повторить</Button>
+                                ) : (
+                                    <Button onClick={() => setScreen('generation')} variant="danger">Стоп</Button>
+                                )}
+
+                                {timeLeft > 0 && (
+                                    <Button onClick={() => setTimeLeft(t => t + 30)} variant="outline">+30с</Button>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                );
+            };
+
+            const CompactItem = ({ icon: Icon, text, color }) => (
+                <div className="flex items-start gap-3 overflow-hidden">
+                    <Icon size={16} className={`${color} shrink-0 mt-1`} />
+                    <span className="text-gray-300 text-sm leading-snug">{text}</span>
+                </div>
+            );
+
+            const Header = ({ title, onBack }) => (
+                <div className="flex items-center justify-between mb-6">
+                    <button onClick={onBack} className="p-2 -ml-2 text-gray-400 hover:text-white rounded-full hover:bg-gray-800">
+                        <X size={24} />
+                    </button>
+                    <h2 className="text-xl font-bold text-white">{title}</h2>
+                    <div className="w-8" /> 
+                </div>
+            );
+
+            const Section = ({ title, children }) => (
+                <div className="mb-6">
+                    <h3 className="text-gray-400 text-xs font-bold uppercase tracking-wider mb-3 ml-1">{title}</h3>
+                    {children}
+                </div>
+            );
+
+            return (
+                <div className="bg-gray-900 text-gray-100 h-screen w-full font-sans selection:bg-yellow-500/30">
+                    {screen === 'onboarding' && <OnboardingScreen />}
+                    {screen === 'settings' && <SettingsScreen />}
+                    {screen === 'generation' && <GenerationScreen />}
+                    {screen === 'scene' && <SceneScreen />}
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
