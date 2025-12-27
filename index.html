@@ -423,6 +423,310 @@
             </div>
         );
 
+        const ModeOption = ({ title, desc, active, onClick }) => (
+                <div 
+                    onClick={onClick}
+                    className={`p-4 rounded-xl border-2 cursor-pointer transition-all ${
+                        active ? 'border-yellow-400 bg-gray-800' : 'border-gray-700 hover:border-gray-600 bg-gray-800/30'
+                    }`}
+                >
+                    <div className="flex justify-between items-center mb-1">
+                        <span className={`font-bold ${active ? 'text-white' : 'text-gray-400'}`}>{title}</span>
+                        {active && <div className="w-3 h-3 bg-yellow-400 rounded-full shadow-[0_0_8px_rgba(250,204,21,0.8)]" />}
+                    </div>
+                    <p className="text-xs text-gray-500 leading-relaxed">{desc}</p>
+                </div>
+            );
+
+        const CompactItem = ({ icon: Icon, text, color }) => (
+            <div className="flex items-start gap-3 overflow-hidden">
+                <Icon size={16} className={`${color} shrink-0 mt-1`} />
+                <span className="text-gray-300 text-sm leading-snug">{text}</span>
+            </div>
+        );
+
+        const Header = ({ title, onBack }) => (
+            <div className="flex items-center justify-between mb-6">
+                <button onClick={onBack} className="p-2 -ml-2 text-gray-400 hover:text-white rounded-full hover:bg-gray-800">
+                    <X size={24} />
+                </button>
+                <h2 className="text-xl font-bold text-white">{title}</h2>
+                <div className="w-8" /> 
+            </div>
+        );
+
+        const Section = ({ title, children }) => (
+            <div className="mb-6">
+                <h3 className="text-gray-400 text-xs font-bold uppercase tracking-wider mb-3 ml-1">{title}</h3>
+                {children}
+            </div>
+        );
+
+        const OnboardingScreen = ({ onStart }) => (
+            <div className="flex flex-col h-full p-6 text-center justify-center max-w-md mx-auto">
+                <div className="mb-6 flex justify-center">
+                    <div className="bg-yellow-400 p-4 rounded-full shadow-[0_0_20px_rgba(250,204,21,0.4)]">
+                        <Zap size={40} className="text-black" />
+                    </div>
+                </div>
+                <h1 className="text-3xl font-black text-white mb-2 uppercase tracking-tight">Конструктор<br/><span className="text-yellow-400">Импровизатора</span></h1>
+                <p className="text-gray-400 mb-6">Генератор случайных сцен для тренировки спонтанности.</p>
+                
+                <div className="space-y-3 text-left bg-gray-800/50 p-5 rounded-2xl mb-8 border border-gray-700">
+                    <RuleItem icon={ArrowRight} text="Прими вводные. Не спорь с генератором." />
+                    <RuleItem icon={Play} text="Не объясняй — играй сразу." />
+                    <RuleItem icon={Target} text="Цель должна двигать сцену." />
+                    <RuleItem icon={AlertTriangle} text="Безумная опция — закон этого мира." />
+                </div>
+
+                <Button onClick={onStart} size="lg">Погнали</Button>
+            </div>
+        );
+
+        const SettingsScreen = ({ settings, setSettings, onStartGame, onBack }) => (
+            <div className="flex flex-col h-full p-6 max-w-md mx-auto">
+                <Header title="Настройки" onBack={onBack} />
+                
+                <div className="space-y-8 flex-1 overflow-y-auto py-4 no-scrollbar">
+                    {/* Mode Selection */}
+                    <Section title="Режим игры">
+                        <div className="grid grid-cols-1 gap-3">
+                            <ModeOption 
+                                active={settings.mode === 'duo'} 
+                                onClick={() => setSettings({...settings, mode: 'duo', duration: 120})}
+                                title="Сцена вдвоем" 
+                                desc="Классика. 2 актера." 
+                            />
+                            <ModeOption 
+                                active={settings.mode === 'solo'} 
+                                onClick={() => setSettings({...settings, mode: 'solo', duration: 60})}
+                                title="Монолог" 
+                                desc="1 актер. 60 сек." 
+                            />
+                        </div>
+                    </Section>
+
+                    {/* Goal Mode (Only for DUO) */}
+                    {settings.mode === 'duo' && (
+                        <Section title="Тип взаимодействия">
+                            <div className="bg-gray-800 p-1 rounded-xl flex">
+                                <button
+                                    onClick={() => setSettings({...settings, goalMode: 'dual'})}
+                                    className={`flex-1 py-3 rounded-lg text-sm font-bold flex flex-col items-center gap-1 transition-all ${
+                                        settings.goalMode === 'dual' ? 'bg-gray-600 text-white shadow' : 'text-gray-500'
+                                    }`}
+                                >
+                                    <span className="flex items-center gap-2"><Users size={16}/> Конфликт</span>
+                                </button>
+                                <button
+                                    onClick={() => setSettings({...settings, goalMode: 'shared'})}
+                                    className={`flex-1 py-3 rounded-lg text-sm font-bold flex flex-col items-center gap-1 transition-all ${
+                                        settings.goalMode === 'shared' ? 'bg-gray-600 text-white shadow' : 'text-gray-500'
+                                    }`}
+                                >
+                                    <span className="flex items-center gap-2"><ShieldAlert size={16}/> Команда</span>
+                                </button>
+                            </div>
+                            <p className="text-xs text-gray-500 mt-2 px-1">
+                                {settings.goalMode === 'dual' 
+                                    ? "💡 Две разные цели создают напряжение." 
+                                    : "🤝 Общая цель + препятствие. Работайте сообща."}
+                            </p>
+                        </Section>
+                    )}
+
+                    {/* Complexity */}
+                    <Section title="Сложность">
+                        <div className="flex bg-gray-800 p-1 rounded-xl">
+                            {['easy', 'normal', 'hard'].map((lvl) => (
+                                <button
+                                    key={lvl}
+                                    onClick={() => setSettings({...settings, difficulty: lvl})}
+                                    className={`flex-1 py-2 rounded-lg text-sm font-bold capitalize transition-all ${
+                                        settings.difficulty === lvl ? 'bg-gray-600 text-white' : 'text-gray-500'
+                                    }`}
+                                >
+                                    {lvl === 'easy' ? 'Лайт' : lvl === 'normal' ? 'Норм' : 'Дичь'}
+                                </button>
+                            ))}
+                        </div>
+                    </Section>
+
+                    {/* Duration */}
+                    <Section title="Таймер">
+                        <div className="flex gap-2 overflow-x-auto pb-2 no-scrollbar">
+                            {[30, 60, 90, 120, 180].map(sec => (
+                                <button
+                                    key={sec}
+                                    onClick={() => setSettings({...settings, duration: sec})}
+                                    className={`w-14 h-14 shrink-0 rounded-full font-bold flex items-center justify-center border-2 transition-all ${
+                                        settings.duration === sec 
+                                            ? 'border-yellow-400 text-yellow-400 bg-yellow-400/10' 
+                                            : 'border-gray-700 text-gray-500'
+                                    }`}
+                                >
+                                    {sec}
+                                </button>
+                            ))}
+                        </div>
+                    </Section>
+
+                    {/* Crazy Options Toggle */}
+                    <Section title="Безумные опции">
+                        <div className="flex bg-gray-800 p-1 rounded-xl">
+                            <button
+                                onClick={() => setSettings({...settings, crazyCount: 0})}
+                                className={`flex-1 py-2 rounded-lg text-sm font-bold transition-all ${
+                                    settings.crazyCount === 0 ? 'bg-gray-600 text-white' : 'text-gray-500'
+                                }`}
+                            >
+                                Без опций
+                            </button>
+                            <button
+                                onClick={() => setSettings({...settings, crazyCount: 1})}
+                                className={`flex-1 py-2 rounded-lg text-sm font-bold transition-all ${
+                                    settings.crazyCount > 0 ? 'bg-yellow-500 text-black shadow' : 'text-gray-500'
+                                }`}
+                            >
+                                С опциями
+                            </button>
+                        </div>
+                    </Section>
+                </div>
+
+                <Button onClick={onStartGame} size="lg" className="mt-4 shadow-xl">
+                    Сгенерировать
+                </Button>
+            </div>
+        );
+
+        const GenerationScreen = ({ setup, settings, onReroll, onRerollCrazy, onGenerateAll, onStartScene, onBack }) => (
+            <div className="flex flex-col h-full p-6 max-w-md mx-auto">
+                <Header title="Сценарий" onBack={onBack} />
+                
+                <div className="flex-1 overflow-y-auto py-2 space-y-1 no-scrollbar">
+                    <Card title="Локация" content={setup.location} icon={MapPin} colorClass="border-blue-500" onReroll={() => onReroll('location')} />
+
+                    <Card title="Персонаж А" content={setup.charA} icon={User} colorClass="border-emerald-500" onReroll={() => onReroll('charA')} />
+
+                    {settings.mode === 'duo' && (
+                        <Card title="Персонаж Б" content={setup.charB} icon={User} colorClass="border-emerald-500" onReroll={() => onReroll('charB')} />
+                    )}
+
+                    {settings.mode === 'duo' && settings.goalMode === 'dual' && (
+                        <React.Fragment>
+                            <Card title="Цель (Персонаж А)" content={setup.goalA} icon={Target} colorClass="border-orange-500" onReroll={() => onReroll('goalA')} />
+                            <Card title="Цель (Персонаж Б)" content={setup.goalB} icon={Target} colorClass="border-orange-500" onReroll={() => onReroll('goalB')} />
+                        </React.Fragment>
+                    )}
+
+                    {settings.mode === 'duo' && settings.goalMode === 'shared' && (
+                        <React.Fragment>
+                            <Card title="Общая цель" content={setup.sharedGoal} icon={Users} colorClass="border-cyan-500" onReroll={() => onReroll('sharedGoal')} />
+                            <Card title="Препятствие / Ставка" content={setup.obstacle} icon={ShieldAlert} colorClass="border-red-500" onReroll={() => onReroll('obstacle')} />
+                        </React.Fragment>
+                    )}
+
+                    {settings.mode !== 'duo' && (
+                        <Card title="Цель" content={setup.goal} icon={Target} colorClass="border-orange-500" onReroll={() => onReroll('goal')} />
+                    )}
+
+                    {setup.crazies.map((crazy, idx) => (
+                        <Card key={idx} title={`Твист #${idx+1}`} content={crazy} icon={Zap} colorClass="border-purple-500" onReroll={() => onRerollCrazy(idx)} />
+                    ))}
+                </div>
+
+                <div className="mt-4 grid grid-cols-2 gap-3">
+                    <Button variant="secondary" onClick={onGenerateAll} size="md">
+                        <RefreshCw size={18} /> Всё
+                    </Button>
+                    <Button onClick={onStartScene} size="md" className="col-span-1">
+                        <Play size={18} /> Старт
+                    </Button>
+                </div>
+            </div>
+        );
+
+        const SceneScreen = ({ timeLeft, setTimeLeft, isRunning, setIsRunning, settings, setup, onBack, onRepeat, onStop }) => {
+            let timerColor = 'text-white';
+            if (timeLeft < 10) timerColor = 'text-red-500 animate-pulse';
+            else if (timeLeft < 30) timerColor = 'text-yellow-400';
+
+            const formatTime = (seconds) => {
+                const m = Math.floor(seconds / 60);
+                const s = seconds % 60;
+                return `${m}:${s < 10 ? '0' : ''}${s}`;
+            };
+
+            return (
+                <div className="flex flex-col h-full bg-black relative overflow-hidden">
+                    <div 
+                        className="absolute top-0 left-0 h-2 bg-yellow-400 transition-all duration-1000 linear z-50"
+                        style={{ width: `${(timeLeft / settings.duration) * 100}%` }}
+                    />
+
+                    <div className="flex-1 flex flex-col items-center justify-center p-6 z-10">
+                        <div className={`text-8xl font-black mb-8 font-mono ${timerColor}`}>
+                            {timeLeft > 0 ? formatTime(timeLeft) : "СТОП"}
+                        </div>
+
+                        {!isRunning && timeLeft === 0 && (
+                            <div className="bg-gray-800 px-6 py-3 rounded-full text-white font-bold animate-bounce mb-8">
+                                Сцена завершена! 👏
+                            </div>
+                        )}
+
+                        <div className="w-full max-w-md bg-gray-900/80 backdrop-blur border border-gray-800 rounded-xl p-4 text-left space-y-3 opacity-80 hover:opacity-100 transition-opacity">
+                            <CompactItem icon={MapPin} text={setup.location} color="text-blue-400" />
+                            <CompactItem icon={User} text={`${setup.charA} / ${setup.charB || ''}`} color="text-emerald-400" />
+                            
+                            {setup.goalMode === 'dual' && setup.mode === 'duo' && (
+                                <React.Fragment>
+                                    <CompactItem icon={Target} text={`А: ${setup.goalA}`} color="text-orange-400" />
+                                    <CompactItem icon={Target} text={`Б: ${setup.goalB}`} color="text-orange-400" />
+                                </React.Fragment>
+                            )}
+
+                            {setup.goalMode === 'shared' && setup.mode === 'duo' && (
+                                <React.Fragment>
+                                    <CompactItem icon={Users} text={setup.sharedGoal} color="text-cyan-400" />
+                                    <CompactItem icon={ShieldAlert} text={setup.obstacle} color="text-red-400" />
+                                </React.Fragment>
+                            )}
+
+                            {setup.mode !== 'duo' && setup.goal && <CompactItem icon={Target} text={setup.goal} color="text-orange-400" />}
+
+                            {setup.crazies.map((c, i) => (
+                                <CompactItem key={i} icon={Zap} text={c} color="text-purple-400" />
+                            ))}
+                        </div>
+                    </div>
+
+                    <div className="p-6 pb-8 bg-gradient-to-t from-black via-black to-transparent z-20">
+                        <div className="grid grid-cols-3 gap-4 max-w-md mx-auto">
+                            {timeLeft === 0 ? (
+                                <Button onClick={onBack} variant="secondary" className="col-span-1">Настройки</Button>
+                            ) : (
+                                <Button onClick={() => setIsRunning(!isRunning)} variant="secondary">
+                                    {isRunning ? <Pause /> : <Play />}
+                                </Button>
+                            )}
+                            
+                            {timeLeft === 0 ? (
+                                <Button onClick={onRepeat} className="col-span-2">Повторить</Button>
+                            ) : (
+                                <Button onClick={onStop} variant="danger">Стоп</Button>
+                            )}
+
+                            {timeLeft > 0 && (
+                                <Button onClick={() => setTimeLeft(t => t + 30)} variant="outline">+30с</Button>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
         function App() {
             // State
             const [screen, setScreen] = useState('onboarding'); 
@@ -564,318 +868,12 @@
                 setSetup(prev => ({ ...prev, crazies: newCrazies }));
             };
 
-            // --- Screens ---
-
-            const OnboardingScreen = () => (
-                <div className="flex flex-col h-full p-6 text-center justify-center max-w-md mx-auto">
-                    <div className="mb-6 flex justify-center">
-                        <div className="bg-yellow-400 p-4 rounded-full shadow-[0_0_20px_rgba(250,204,21,0.4)]">
-                            <Zap size={40} className="text-black" />
-                        </div>
-                    </div>
-                    <h1 className="text-3xl font-black text-white mb-2 uppercase tracking-tight">Конструктор<br/><span className="text-yellow-400">Импровизатора</span></h1>
-                    <p className="text-gray-400 mb-6">Генератор случайных сцен для тренировки спонтанности.</p>
-                    
-                    <div className="space-y-3 text-left bg-gray-800/50 p-5 rounded-2xl mb-8 border border-gray-700">
-                        <RuleItem icon={ArrowRight} text="Прими вводные. Не спорь с генератором." />
-                        <RuleItem icon={Play} text="Не объясняй — играй сразу." />
-                        <RuleItem icon={Target} text="Цель должна двигать сцену." />
-                        <RuleItem icon={AlertTriangle} text="Безумная опция — закон этого мира." />
-                    </div>
-
-                    <Button onClick={() => setScreen('settings')} size="lg">Погнали</Button>
-                </div>
-            );
-
-            const SettingsScreen = () => (
-                <div className="flex flex-col h-full p-6 max-w-md mx-auto">
-                    <Header title="Настройки" onBack={() => setScreen('onboarding')} />
-                    
-                    <div className="space-y-8 flex-1 overflow-y-auto py-4 no-scrollbar">
-                        {/* Mode Selection */}
-                        <Section title="Режим игры">
-                            <div className="grid grid-cols-1 gap-3">
-                                <ModeOption 
-                                    active={settings.mode === 'duo'} 
-                                    onClick={() => setSettings({...settings, mode: 'duo', duration: 120})}
-                                    title="Сцена вдвоем" 
-                                    desc="Классика. 2 актера." 
-                                />
-                                <ModeOption 
-                                    active={settings.mode === 'solo'} 
-                                    onClick={() => setSettings({...settings, mode: 'solo', duration: 60})}
-                                    title="Монолог" 
-                                    desc="1 актер. 60 сек." 
-                                />
-                            </div>
-                        </Section>
-
-                        {/* Goal Mode (Only for DUO) */}
-                        {settings.mode === 'duo' && (
-                            <Section title="Тип взаимодействия">
-                                <div className="bg-gray-800 p-1 rounded-xl flex">
-                                    <button
-                                        onClick={() => setSettings({...settings, goalMode: 'dual'})}
-                                        className={`flex-1 py-3 rounded-lg text-sm font-bold flex flex-col items-center gap-1 transition-all ${
-                                            settings.goalMode === 'dual' ? 'bg-gray-600 text-white shadow' : 'text-gray-500'
-                                        }`}
-                                    >
-                                        <span className="flex items-center gap-2"><Users size={16}/> Конфликт</span>
-                                    </button>
-                                    <button
-                                        onClick={() => setSettings({...settings, goalMode: 'shared'})}
-                                        className={`flex-1 py-3 rounded-lg text-sm font-bold flex flex-col items-center gap-1 transition-all ${
-                                            settings.goalMode === 'shared' ? 'bg-gray-600 text-white shadow' : 'text-gray-500'
-                                        }`}
-                                    >
-                                        <span className="flex items-center gap-2"><ShieldAlert size={16}/> Команда</span>
-                                    </button>
-                                </div>
-                                <p className="text-xs text-gray-500 mt-2 px-1">
-                                    {settings.goalMode === 'dual' 
-                                        ? "💡 Две разные цели создают напряжение." 
-                                        : "🤝 Общая цель + препятствие. Работайте сообща."}
-                                </p>
-                            </Section>
-                        )}
-
-                        {/* Complexity */}
-                        <Section title="Сложность">
-                            <div className="flex bg-gray-800 p-1 rounded-xl">
-                                {['easy', 'normal', 'hard'].map((lvl) => (
-                                    <button
-                                        key={lvl}
-                                        onClick={() => setSettings({...settings, difficulty: lvl})}
-                                        className={`flex-1 py-2 rounded-lg text-sm font-bold capitalize transition-all ${
-                                            settings.difficulty === lvl ? 'bg-gray-600 text-white' : 'text-gray-500'
-                                        }`}
-                                    >
-                                        {lvl === 'easy' ? 'Лайт' : lvl === 'normal' ? 'Норм' : 'Дичь'}
-                                    </button>
-                                ))}
-                            </div>
-                        </Section>
-
-                        {/* Duration */}
-                        <Section title="Таймер">
-                            <div className="flex gap-2 overflow-x-auto pb-2 no-scrollbar">
-                                {[30, 60, 90, 120, 180].map(sec => (
-                                    <button
-                                        key={sec}
-                                        onClick={() => setSettings({...settings, duration: sec})}
-                                        className={`w-14 h-14 shrink-0 rounded-full font-bold flex items-center justify-center border-2 transition-all ${
-                                            settings.duration === sec 
-                                                ? 'border-yellow-400 text-yellow-400 bg-yellow-400/10' 
-                                                : 'border-gray-700 text-gray-500'
-                                        }`}
-                                    >
-                                        {sec}
-                                    </button>
-                                ))}
-                            </div>
-                        </Section>
-
-                        {/* Crazy Options Toggle */}
-                        <Section title="Безумные опции">
-                            <div className="flex bg-gray-800 p-1 rounded-xl">
-                                <button
-                                    onClick={() => setSettings({...settings, crazyCount: 0})}
-                                    className={`flex-1 py-2 rounded-lg text-sm font-bold transition-all ${
-                                        settings.crazyCount === 0 ? 'bg-gray-600 text-white' : 'text-gray-500'
-                                    }`}
-                                >
-                                    Без опций
-                                </button>
-                                <button
-                                    onClick={() => setSettings({...settings, crazyCount: 1})}
-                                    className={`flex-1 py-2 rounded-lg text-sm font-bold transition-all ${
-                                        settings.crazyCount > 0 ? 'bg-yellow-500 text-black shadow' : 'text-gray-500'
-                                    }`}
-                                >
-                                    С опциями
-                                </button>
-                            </div>
-                        </Section>
-                    </div>
-
-                    <Button onClick={handleStartGame} size="lg" className="mt-4 shadow-xl">
-                        Сгенерировать
-                    </Button>
-                </div>
-            );
-
-            const ModeOption = ({ title, desc, active, onClick }) => (
-                <div 
-                    onClick={onClick}
-                    className={`p-4 rounded-xl border-2 cursor-pointer transition-all ${
-                        active ? 'border-yellow-400 bg-gray-800' : 'border-gray-700 hover:border-gray-600 bg-gray-800/30'
-                    }`}
-                >
-                    <div className="flex justify-between items-center mb-1">
-                        <span className={`font-bold ${active ? 'text-white' : 'text-gray-400'}`}>{title}</span>
-                        {active && <div className="w-3 h-3 bg-yellow-400 rounded-full shadow-[0_0_8px_rgba(250,204,21,0.8)]" />}
-                    </div>
-                    <p className="text-xs text-gray-500 leading-relaxed">{desc}</p>
-                </div>
-            );
-
-            const GenerationScreen = () => (
-                <div className="flex flex-col h-full p-6 max-w-md mx-auto">
-                    <Header title="Сценарий" onBack={() => setScreen('settings')} />
-                    
-                    <div className="flex-1 overflow-y-auto py-2 space-y-1 no-scrollbar">
-                        <Card title="Локация" content={setup.location} icon={MapPin} colorClass="border-blue-500" onReroll={() => reroll('location')} />
-
-                        <Card title="Персонаж А" content={setup.charA} icon={User} colorClass="border-emerald-500" onReroll={() => reroll('charA')} />
-
-                        {settings.mode === 'duo' && (
-                            <Card title="Персонаж Б" content={setup.charB} icon={User} colorClass="border-emerald-500" onReroll={() => reroll('charB')} />
-                        )}
-
-                        {settings.mode === 'duo' && settings.goalMode === 'dual' && (
-                            <React.Fragment>
-                                <Card title="Цель (Персонаж А)" content={setup.goalA} icon={Target} colorClass="border-orange-500" onReroll={() => reroll('goalA')} />
-                                <Card title="Цель (Персонаж Б)" content={setup.goalB} icon={Target} colorClass="border-orange-500" onReroll={() => reroll('goalB')} />
-                            </React.Fragment>
-                        )}
-
-                        {settings.mode === 'duo' && settings.goalMode === 'shared' && (
-                            <React.Fragment>
-                                <Card title="Общая цель" content={setup.sharedGoal} icon={Users} colorClass="border-cyan-500" onReroll={() => reroll('sharedGoal')} />
-                                <Card title="Препятствие / Ставка" content={setup.obstacle} icon={ShieldAlert} colorClass="border-red-500" onReroll={() => reroll('obstacle')} />
-                            </React.Fragment>
-                        )}
-
-                        {settings.mode !== 'duo' && (
-                            <Card title="Цель" content={setup.goal} icon={Target} colorClass="border-orange-500" onReroll={() => reroll('goal')} />
-                        )}
-
-                        {setup.crazies.map((crazy, idx) => (
-                            <Card key={idx} title={`Твист #${idx+1}`} content={crazy} icon={Zap} colorClass="border-purple-500" onReroll={() => rerollCrazy(idx)} />
-                        ))}
-                    </div>
-
-                    <div className="mt-4 grid grid-cols-2 gap-3">
-                        <Button variant="secondary" onClick={generateSetup} size="md">
-                            <RefreshCw size={18} /> Всё
-                        </Button>
-                        <Button onClick={handleStartScene} size="md" className="col-span-1">
-                            <Play size={18} /> Старт
-                        </Button>
-                    </div>
-                </div>
-            );
-
-            const SceneScreen = () => {
-                let timerColor = 'text-white';
-                if (timeLeft < 10) timerColor = 'text-red-500 animate-pulse';
-                else if (timeLeft < 30) timerColor = 'text-yellow-400';
-
-                const formatTime = (seconds) => {
-                    const m = Math.floor(seconds / 60);
-                    const s = seconds % 60;
-                    return `${m}:${s < 10 ? '0' : ''}${s}`;
-                };
-
-                return (
-                    <div className="flex flex-col h-full bg-black relative overflow-hidden">
-                        <div 
-                            className="absolute top-0 left-0 h-2 bg-yellow-400 transition-all duration-1000 linear z-50"
-                            style={{ width: `${(timeLeft / settings.duration) * 100}%` }}
-                        />
-
-                        <div className="flex-1 flex flex-col items-center justify-center p-6 z-10">
-                            <div className={`text-8xl font-black mb-8 font-mono ${timerColor}`}>
-                                {timeLeft > 0 ? formatTime(timeLeft) : "СТОП"}
-                            </div>
-
-                            {!isRunning && timeLeft === 0 && (
-                                <div className="bg-gray-800 px-6 py-3 rounded-full text-white font-bold animate-bounce mb-8">
-                                    Сцена завершена! 👏
-                                </div>
-                            )}
-
-                            <div className="w-full max-w-md bg-gray-900/80 backdrop-blur border border-gray-800 rounded-xl p-4 text-left space-y-3 opacity-80 hover:opacity-100 transition-opacity">
-                                <CompactItem icon={MapPin} text={setup.location} color="text-blue-400" />
-                                <CompactItem icon={User} text={`${setup.charA} / ${setup.charB || ''}`} color="text-emerald-400" />
-                                
-                                {setup.goalMode === 'dual' && setup.mode === 'duo' && (
-                                    <React.Fragment>
-                                        <CompactItem icon={Target} text={`А: ${setup.goalA}`} color="text-orange-400" />
-                                        <CompactItem icon={Target} text={`Б: ${setup.goalB}`} color="text-orange-400" />
-                                    </React.Fragment>
-                                )}
-
-                                {setup.goalMode === 'shared' && setup.mode === 'duo' && (
-                                    <React.Fragment>
-                                        <CompactItem icon={Users} text={setup.sharedGoal} color="text-cyan-400" />
-                                        <CompactItem icon={ShieldAlert} text={setup.obstacle} color="text-red-400" />
-                                    </React.Fragment>
-                                )}
-
-                                {setup.mode !== 'duo' && setup.goal && <CompactItem icon={Target} text={setup.goal} color="text-orange-400" />}
-
-                                {setup.crazies.map((c, i) => (
-                                    <CompactItem key={i} icon={Zap} text={c} color="text-purple-400" />
-                                ))}
-                            </div>
-                        </div>
-
-                        <div className="p-6 pb-8 bg-gradient-to-t from-black via-black to-transparent z-20">
-                            <div className="grid grid-cols-3 gap-4 max-w-md mx-auto">
-                                {timeLeft === 0 ? (
-                                    <Button onClick={() => setScreen('generation')} variant="secondary" className="col-span-1">Настройки</Button>
-                                ) : (
-                                    <Button onClick={() => setIsRunning(!isRunning)} variant="secondary">
-                                        {isRunning ? <Pause /> : <Play />}
-                                    </Button>
-                                )}
-                                
-                                {timeLeft === 0 ? (
-                                    <Button onClick={() => {setTimeLeft(settings.duration); setIsRunning(true);}} className="col-span-2">Повторить</Button>
-                                ) : (
-                                    <Button onClick={() => setScreen('generation')} variant="danger">Стоп</Button>
-                                )}
-
-                                {timeLeft > 0 && (
-                                    <Button onClick={() => setTimeLeft(t => t + 30)} variant="outline">+30с</Button>
-                                )}
-                            </div>
-                        </div>
-                    </div>
-                );
-            };
-
-            const CompactItem = ({ icon: Icon, text, color }) => (
-                <div className="flex items-start gap-3 overflow-hidden">
-                    <Icon size={16} className={`${color} shrink-0 mt-1`} />
-                    <span className="text-gray-300 text-sm leading-snug">{text}</span>
-                </div>
-            );
-
-            const Header = ({ title, onBack }) => (
-                <div className="flex items-center justify-between mb-6">
-                    <button onClick={onBack} className="p-2 -ml-2 text-gray-400 hover:text-white rounded-full hover:bg-gray-800">
-                        <X size={24} />
-                    </button>
-                    <h2 className="text-xl font-bold text-white">{title}</h2>
-                    <div className="w-8" /> 
-                </div>
-            );
-
-            const Section = ({ title, children }) => (
-                <div className="mb-6">
-                    <h3 className="text-gray-400 text-xs font-bold uppercase tracking-wider mb-3 ml-1">{title}</h3>
-                    {children}
-                </div>
-            );
-
             return (
                 <div className="bg-gray-900 text-gray-100 h-screen w-full font-sans selection:bg-yellow-500/30">
-                    {screen === 'onboarding' && <OnboardingScreen />}
-                    {screen === 'settings' && <SettingsScreen />}
-                    {screen === 'generation' && <GenerationScreen />}
-                    {screen === 'scene' && <SceneScreen />}
+                    {screen === 'onboarding' && <OnboardingScreen onStart={() => setScreen('settings')} />}
+                    {screen === 'settings' && <SettingsScreen settings={settings} setSettings={setSettings} onStartGame={handleStartGame} onBack={() => setScreen('onboarding')} />}
+                    {screen === 'generation' && <GenerationScreen setup={setup} settings={settings} onReroll={reroll} onRerollCrazy={rerollCrazy} onGenerateAll={generateSetup} onStartScene={handleStartScene} onBack={() => setScreen('settings')} />}
+                    {screen === 'scene' && <SceneScreen timeLeft={timeLeft} setTimeLeft={setTimeLeft} isRunning={isRunning} setIsRunning={setIsRunning} settings={settings} setup={setup} onBack={() => setScreen('generation')} onRepeat={() => {setTimeLeft(settings.duration); setIsRunning(true);}} onStop={() => setScreen('generation')} />}
                 </div>
             );
         }
