@@ -67,18 +67,10 @@
         const X = (props) => <IconBase {...props}><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></IconBase>;
         const Star = (props) => <IconBase {...props}><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></IconBase>;
 
-        // --- Helper for Difficulty Mapping ---
-        const mapDiff = (d) => {
-            const val = parseInt(d);
-            if (val === 1) return 'easy';
-            if (val === 2) return 'normal';
-            if (val === 3) return 'hard';
-            return 'normal';
-        };
-
         // --- Data Dictionaries ---
         const DICTIONARY = {
             locations: [
+                // --- HOME ---
                 { text: "Кухня в коммуналке", category: "home", difficulty: "easy" },
                 { text: "Квартира-студия", category: "home", difficulty: "easy" },
                 { text: "Балкон с видом на двор", category: "home", difficulty: "easy" },
@@ -86,11 +78,11 @@
                 { text: "Лифт", category: "home", difficulty: "easy" },
                 { text: "Лестничная площадка", category: "home", difficulty: "easy" },
                 { text: "Двор с детской площадкой", category: "home", difficulty: "easy" },
+                { text: "Кладовка", category: "home", difficulty: "easy" },
                 { text: "Гараж", category: "home", difficulty: "normal" },
                 { text: "Чердак", category: "home", difficulty: "normal" },
                 { text: "Подвал", category: "home", difficulty: "normal" },
-                { text: "Кладовка", category: "home", difficulty: "easy" },
-                { text: "Прачечная/химчистка", category: "city", difficulty: "easy" },
+                // --- CITY ---
                 { text: "Пункт выдачи заказов", category: "city", difficulty: "easy" },
                 { text: "Кофейня у метро", category: "city", difficulty: "easy" },
                 { text: "Пекарня", category: "city", difficulty: "easy" },
@@ -110,32 +102,33 @@
                 { text: "Салон красоты", category: "city", difficulty: "easy" },
                 { text: "Бар в пятницу вечером", category: "city", difficulty: "normal" },
                 { text: "Ресторан с белыми скатертями", category: "city", difficulty: "normal" },
+                // --- CULTURE ---
                 { text: "Кинотеатр (фойе)", category: "culture", difficulty: "easy" },
                 { text: "Театр (закулисье)", category: "culture", difficulty: "normal" },
                 { text: "Музей (зал)", category: "culture", difficulty: "easy" },
-                { text: "Книжный магазин", category: "city", difficulty: "easy" },
-                { text: "Библиотека", category: "city", difficulty: "easy" },
+                { text: "Библиотека", category: "culture", difficulty: "easy" },
+                { text: "Гримерка перед выступлением", category: "culture", difficulty: "normal" },
+                { text: "Сцена за минуту до выхода", category: "culture", difficulty: "hard" },
+                // --- WORK ---
                 { text: "Коворкинг", category: "work", difficulty: "easy" },
-                { text: "Опенспейс", category: "work", difficulty: "easy" },
-                { text: "Переговорка", category: "work", difficulty: "easy" },
+                { text: "Офисный опенспейс", category: "work", difficulty: "easy" },
+                { text: "Переговорка", category: "work", difficulty: "normal" },
                 { text: "Ресепшн офиса", category: "work", difficulty: "easy" },
                 { text: "Кабинет директора", category: "work", difficulty: "normal" },
-                { text: "Склад", category: "work", difficulty: "normal" },
                 { text: "Кухня в офисе", category: "work", difficulty: "easy" },
                 { text: "Колл-центр", category: "work", difficulty: "normal" },
-                { text: "Доставка (у двери клиента)", category: "work", difficulty: "easy" },
+                { text: "Склад", category: "work", difficulty: "normal" },
+                { text: "Доставка у двери клиента", category: "work", difficulty: "easy" },
                 { text: "Стройка", category: "work", difficulty: "normal" },
                 { text: "Учительская", category: "work", difficulty: "normal" },
                 { text: "Класс", category: "work", difficulty: "easy" },
                 { text: "Университетская аудитория", category: "work", difficulty: "easy" },
-                { text: "Свадебный банкет", category: "events", difficulty: "normal" },
-                { text: "День рождения-сюрприз", category: "events", difficulty: "normal" },
-                { text: "Гримерка перед выступлением", category: "culture", difficulty: "normal" },
-                { text: "Сцена за минуту до выхода", category: "culture", difficulty: "hard" },
+                // --- NATURE ---
                 { text: "Пляж в ветреный день", category: "nature", difficulty: "easy" },
                 { text: "Лесная тропа", category: "nature", difficulty: "easy" },
                 { text: "Горный приют", category: "nature", difficulty: "normal" },
                 { text: "Палатка под дождём", category: "nature", difficulty: "normal" },
+                // --- WEIRD ---
                 { text: "Подводная станция", category: "weird", difficulty: "hard" },
                 { text: "Космический корабль", category: "weird", difficulty: "hard" },
                 { text: "Отель для призраков", category: "weird", difficulty: "hard" },
@@ -148,11 +141,21 @@
                 { text: "Комната ожидания “после жизни”", category: "weird", difficulty: "hard" }
             ],
             roles: [
+                // --- CITY/SERVICE ---
                 { text: "Курьер", difficulty: "easy" },
                 { text: "Кассир", difficulty: "easy" },
                 { text: "Бариста", difficulty: "easy" },
-                { text: "Охранник", difficulty: "normal" },
+                { text: "Покупатель", difficulty: "easy" },
+                { text: "Клиент VIP", difficulty: "normal" },
+                { text: "Таксист", difficulty: "easy" },
+                { text: "Пассажир в такси", difficulty: "easy" },
+                { text: "Незнакомец в лифте", difficulty: "easy" },
                 { text: "Администратор ресепшн", difficulty: "easy" },
+                { text: "Охранник", difficulty: "normal" },
+                { text: "Полицейский", difficulty: "normal" },
+                { text: "Журналист", difficulty: "normal" },
+                { text: "Блогер", difficulty: "normal" },
+                // --- WORK ---
                 { text: "Менеджер по продажам", difficulty: "normal" },
                 { text: "HR-менеджер", difficulty: "normal" },
                 { text: "Проджект-менеджер", difficulty: "normal" },
@@ -163,41 +166,29 @@
                 { text: "Маркетолог", difficulty: "normal" },
                 { text: "Дизайнер", difficulty: "normal" },
                 { text: "Программист", difficulty: "normal" },
-                { text: "Психолог", difficulty: "normal" },
-                { text: "Врач", difficulty: "normal" },
-                { text: "Фармацевт", difficulty: "easy" },
+                { text: "Коллега “старожил”", difficulty: "normal" },
+                // --- EDUCATION ---
                 { text: "Учитель", difficulty: "easy" },
                 { text: "Студент", difficulty: "easy" },
-                { text: "Тренер", difficulty: "easy" },
+                { text: "Тренер", difficulty: "normal" },
+                { text: "Экзаменатор", difficulty: "normal" },
+                // --- SCENE ---
                 { text: "Актёр", difficulty: "normal" },
                 { text: "Режиссёр", difficulty: "normal" },
                 { text: "Музыкант", difficulty: "normal" },
                 { text: "Ведущий мероприятия", difficulty: "normal" },
-                { text: "Невеста/жених", difficulty: "normal" },
                 { text: "Организатор", difficulty: "normal" },
+                // --- HOME ---
                 { text: "Сосед(ка)", difficulty: "easy" },
                 { text: "Родитель", difficulty: "easy" },
                 { text: "Подросток", difficulty: "easy" },
                 { text: "Партнёр по отношениям", difficulty: "easy" },
                 { text: "Лучший друг", difficulty: "easy" },
-                { text: "Незнакомец в лифте", difficulty: "easy" },
-                { text: "Пассажир в такси", difficulty: "easy" },
-                { text: "Таксист", difficulty: "easy" },
-                { text: "Покупатель", difficulty: "easy" },
-                { text: "Клиент VIP", difficulty: "normal" },
-                { text: "Журналист", difficulty: "normal" },
-                { text: "Блогер", difficulty: "normal" },
-                { text: "Полицейский", difficulty: "normal" },
-                { text: "Следователь", difficulty: "normal" },
-                { text: "Судья", difficulty: "hard" },
-                { text: "Проводник", difficulty: "normal" },
-                { text: "Стюард(есса)", difficulty: "normal" },
-                { text: "Гид", difficulty: "normal" },
-                { text: "Спасатель", difficulty: "normal" },
-                { text: "Ученый", difficulty: "hard" },
-                { text: "Инопланетянин", difficulty: "hard" },
-                { text: "Робот-помощник", difficulty: "hard" },
+                // --- WEIRD ---
                 { text: "Призрак", difficulty: "hard" },
+                { text: "Робот-помощник", difficulty: "hard" },
+                { text: "Инопланетянин", difficulty: "hard" },
+                { text: "Учёный", difficulty: "hard" },
                 { text: "Продавец времени", difficulty: "hard" },
                 { text: "Коллекционер эмоций", difficulty: "hard" }
             ],
@@ -263,58 +254,25 @@
             goalsSingle: [
                 { text: "Убедить другого остаться ещё на 5 минут", difficulty: "easy" },
                 { text: "Убедить другого уйти прямо сейчас", difficulty: "easy" },
-                { text: "Доказать свою правоту любым способом", difficulty: "normal" },
+                { text: "Попросить услугу, не унизившись", difficulty: "easy" },
+                { text: "Отказать и не поссориться", difficulty: "easy" },
                 { text: "Извиниться так, чтобы тебе поверили", difficulty: "easy" },
                 { text: "Скрыть, что ты виноват(а)", difficulty: "normal" },
                 { text: "Вывести другого на признание", difficulty: "normal" },
-                { text: "Попросить услугу, не унизившись", difficulty: "easy" },
-                { text: "Отказать и не поссориться", difficulty: "easy" },
-                { text: "Сделать предложение, не получив отказ", difficulty: "normal" },
-                { text: "Разорвать отношения “по-хорошему”", difficulty: "normal" },
                 { text: "Продать идею/проект за 1 минуту", difficulty: "normal" },
                 { text: "Выбить скидку, не выглядя жадным", difficulty: "easy" },
                 { text: "Получить доступ/пропуск/разрешение", difficulty: "easy" },
-                { text: "Не пустить другого, соблюдая правила", difficulty: "normal" },
                 { text: "Вернуть долг, не разрушив отношения", difficulty: "normal" },
                 { text: "Попросить в долг, сохранив статус", difficulty: "normal" },
                 { text: "Договориться о переносе срока", difficulty: "normal" },
                 { text: "Скрыть, что ты ничего не сделал(а)", difficulty: "normal" },
                 { text: "Успокоить человека в панике", difficulty: "normal" },
-                { text: "Заставить другого успокоиться (жёстко)", difficulty: "normal" },
-                { text: "Получить комплимент, не выпрашивая", difficulty: "easy" },
                 { text: "Сохранить лицо после ошибки", difficulty: "normal" },
-                { text: "Вынудить другого признать твой авторитет", difficulty: "hard" },
-                { text: "Показать, что ты главный(ая)", difficulty: "hard" },
-                { text: "Сделать так, чтобы другой взял ответственность", difficulty: "normal" },
-                { text: "Переложить ответственность незаметно", difficulty: "hard" },
-                { text: "Уговорить на риск, риск при этом тебе страшен", difficulty: "normal" },
-                { text: "Отговорить от риска, хотя тебе выгодно", difficulty: "hard" },
-                { text: "Срочно найти потерянную вещь", difficulty: "easy" },
-                { text: "Удержать информацию в секрете", difficulty: "normal" },
-                { text: "Выведать пароль/код", difficulty: "hard" },
-                { text: "Сохранить тайну друга", difficulty: "normal" },
-                { text: "Попросить прощения, но не признавать вину", difficulty: "hard" },
-                { text: "Сказать правду, которая разрушит планы", difficulty: "hard" },
-                { text: "Сделать вид, что всё под контролем", difficulty: "normal" },
-                { text: "Попросить повысить оплату/зарплату", difficulty: "normal" },
-                { text: "Снизить цену, сохранив уважение", difficulty: "normal" },
-                { text: "Убедить, что ты “свой”", difficulty: "normal" },
-                { text: "Проверить, можно ли доверять человеку", difficulty: "normal" },
-                { text: "Оправдать своё поведение без оправданий", difficulty: "normal" },
-                { text: "Выиграть спор, не повышая голос", difficulty: "normal" },
-                { text: "Заставить человека улыбнуться", difficulty: "easy" },
-                { text: "Заставить человека замолчать", difficulty: "normal" },
-                { text: "Договориться о правилах “на берегу”", difficulty: "normal" },
-                { text: "Срочно получить помощь", difficulty: "easy" },
+                { text: "Добиться признания авторитета", difficulty: "hard" },
                 { text: "Не дать втянуть себя в чужую драму", difficulty: "normal" },
-                { text: "Сделать так, чтобы другой сделал первый шаг", difficulty: "normal" },
-                { text: "Соблазнить через интеллект", difficulty: "hard" },
-                { text: "Сохранить нейтралитет в конфликте", difficulty: "normal" },
                 { text: "Выяснить “что между нами”", difficulty: "normal" },
-                { text: "Убедить купить прямо сейчас", difficulty: "normal" },
                 { text: "Отстоять возврат/компенсацию", difficulty: "normal" },
-                { text: "Вынудить другого назвать цену первым", difficulty: "hard" },
-                { text: "Сделать так, чтобы другой согласился на твою версию", difficulty: "normal" }
+                { text: "Вынудить другого назвать цену первым", difficulty: "hard" }
             ],
             goalsPairs: [
                 { a: "Убедить подписать договор", b: "Не подписывать без гарантий", difficulty: "normal" },
@@ -323,49 +281,71 @@
                 { a: "Попросить в долг", b: "Отказать и не выглядеть жадным", difficulty: "normal" },
                 { a: "Убедить остаться", b: "Уйти как можно быстрее", difficulty: "easy" },
                 { a: "Сказать правду", b: "Скрыть правду ради выгоды", difficulty: "hard" },
-                { a: "Продать идею за минуту", b: "Разнести идею и остановить", difficulty: "normal" },
+                { a: "Продать идею", b: "Разнести идею и остановить", difficulty: "normal" },
                 { a: "Добиться признания", b: "Не признаться ни при каких условиях", difficulty: "normal" },
-                { a: "Успокоить человека", b: "Разогнать конфликт и “встряхнуть”", difficulty: "normal" },
-                { a: "Договориться о переносе сроков", b: "Не переносить сроки и давить", difficulty: "normal" },
+                { a: "Успокоить", b: "“Встряхнуть” и надавить", difficulty: "normal" },
+                { a: "Перенести сроки", b: "Давить и не переносить", difficulty: "normal" },
                 { a: "Уговорить на риск", b: "Остановить и защитить", difficulty: "normal" },
                 { a: "Выяснить отношения", b: "Свести всё к шутке и уйти", difficulty: "normal" },
                 { a: "Получить скидку", b: "Не давать скидку из принципа", difficulty: "normal" },
-                { a: "Убедить, что ты “свой”", b: "Проверить и не доверять", difficulty: "normal" },
-                { a: "Сделать предложение", b: "Не брать обязательств", difficulty: "normal" },
-                { a: "Попросить повышения", b: "Сэкономить бюджет любой ценой", difficulty: "normal" },
-                { a: "Заставить признать авторитет", b: "Снизить чужой статус и доминировать", difficulty: "hard" },
-                { a: "Сохранить тайну", b: "Вытащить секрет ради правды", difficulty: "hard" },
-                { a: "Отстоять возврат", b: "Не возвращать деньги по правилам", difficulty: "normal" },
-                { a: "Сделать первый шаг к примирению", b: "Отказаться мириться из гордости", difficulty: "normal" }
+                { a: "Стать “своим”", b: "Проверять и не доверять", difficulty: "normal" },
+                { a: "Попросить повышения", b: "Сэкономить бюджет любой ценой", difficulty: "normal" }
             ],
             goalsShared: [
-                { goal: "Успеть на поезд/самолёт", obstacle: "Один постоянно отвлекается разговорами", difficulty: "normal" },
-                { goal: "Скрыть проблему от третьего лица", obstacle: "Третье лицо вот-вот войдёт", difficulty: "normal" },
-                { goal: "Срочно найти пропавшую вещь", obstacle: "Никто не признаётся, кто брал", difficulty: "normal" },
-                { goal: "Отрепетировать выступление", obstacle: "Время заканчивается и все нервничают", difficulty: "normal" },
-                { goal: "Сделать “идеальный” сервис клиенту", obstacle: "Клиент провоцирует и хамит", difficulty: "normal" },
-                { goal: "Спасти мероприятие от провала", obstacle: "Организатор в панике и обвиняет всех", difficulty: "normal" },
-                { goal: "Выжить в странном мире", obstacle: "Здесь другие законы (например, нельзя говорить “нет”)", difficulty: "hard" },
-                { goal: "Договориться о совместных правилах", obstacle: "Оба боятся потерять свободу", difficulty: "normal" },
-                { goal: "Доказать, что вы команда", obstacle: "Вас проверяют и провоцируют на конфликт", difficulty: "hard" },
-                { goal: "Удержать контроль над ситуацией", obstacle: "Никто не имеет полной информации", difficulty: "hard" },
-                { goal: "Устроить сюрприз", obstacle: "Один хочет сорвать ради “правды”", difficulty: "normal" },
-                { goal: "Провести переговоры", obstacle: "Каждый слышит по-своему и интерпретирует", difficulty: "normal" },
-                { goal: "Сделать “продающий” питч", obstacle: "В аудитории скептик, который перебивает", difficulty: "normal" },
-                { goal: "Дойти до пункта назначения", obstacle: "Сбой навигации/карты и спор о маршруте", difficulty: "normal" },
-                { goal: "Снять напряжение в группе", obstacle: "Скрытый конфликт выходит наружу", difficulty: "hard" }
+                { goal: "Успеть на поезд/самолёт", obstacle: "один постоянно отвлекается разговорами", difficulty: "normal" },
+                { goal: "Скрыть проблему от третьего лица", obstacle: "третье лицо вот-вот войдёт", difficulty: "normal" },
+                { goal: "Срочно найти пропавшую вещь", obstacle: "никто не признаётся, кто брал", difficulty: "normal" },
+                { goal: "Отрепетировать выступление", obstacle: "времени почти нет, все нервничают", difficulty: "normal" },
+                { goal: "Спасти мероприятие от провала", obstacle: "организатор в панике и обвиняет всех", difficulty: "normal" },
+                { goal: "Договориться о правилах", obstacle: "оба боятся потерять свободу", difficulty: "normal" },
+                { goal: "Провести переговоры", obstacle: "скептик постоянно перебивает", difficulty: "normal" },
+                { goal: "Дойти до пункта назначения", obstacle: "навигация сломалась, спор о маршруте", difficulty: "normal" }
             ],
             crazyOptions: [
-                { text: "Нельзя использовать букву 'А'", type: "speech", difficulty: "hard" },
-                { text: "Ты всё время смеешься", type: "emotion", difficulty: "easy" },
-                { text: "Твои руки живут своей жизнью", type: "physical", difficulty: "normal" },
-                { text: "Каждая фраза — это вопрос", type: "speech", difficulty: "normal" },
-                { text: "Ты думаешь, что всё вокруг — сон", type: "mental", difficulty: "hard" },
-                { text: "Нужно касаться собеседника каждые 5 сек", type: "physical", difficulty: "normal" },
-                { text: "Время идет задом наперед (отыграй)", type: "world", difficulty: "hard" },
-                { text: "Пол — это лава", type: "physical", difficulty: "easy" },
-                { text: "Ты говоришь стихами", type: "speech", difficulty: "hard" },
-                { text: "Ты мгновенно забываешь, что сказал", type: "mental", difficulty: "normal" },
+                // --- SPEECH ---
+                { text: "Каждая фраза — вопрос", type: "speech", difficulty: "normal" },
+                { text: "Нельзя использовать слово “я”", type: "speech", difficulty: "hard" },
+                { text: "Нельзя говорить “нет”", type: "speech", difficulty: "hard" },
+                { text: "Говоришь только шёпотом", type: "speech", difficulty: "normal" },
+                { text: "Говоришь слишком медленно, как робот", type: "speech", difficulty: "hard" },
+                { text: "В каждой фразе обязателен комплимент", type: "speech", difficulty: "normal" },
+                { text: "В каждой фразе обязателен отказ (но мягкий)", type: "speech", difficulty: "hard" },
+                { text: "Говоришь только метафорами (“это как…”)", type: "speech", difficulty: "hard" },
+                // --- PHYSICAL ---
+                { text: "Нельзя стоять на месте (всё время в движении)", type: "physical", difficulty: "normal" },
+                { text: "Ты держишь воображаемый тяжёлый предмет", type: "physical", difficulty: "normal" },
+                { text: "Ты всё время пытаешься занять “чужое” место", type: "physical", difficulty: "normal" },
+                { text: "Ты постоянно поправляешь невидимую одежду", type: "physical", difficulty: "easy" },
+                { text: "Ты не можешь смотреть в глаза", type: "physical", difficulty: "normal" },
+                { text: "Ты “слишком близко” подходишь (нарушаешь дистанцию)", type: "physical", difficulty: "normal" },
+                // --- EMOTIONAL ---
+                { text: "Ты в восторге и не можешь скрыть радость", type: "emotion", difficulty: "easy" },
+                { text: "Ты в панике, но пытаешься выглядеть спокойным", type: "emotion", difficulty: "normal" },
+                { text: "Ты смертельно устал, но держишь лицо", type: "emotion", difficulty: "normal" },
+                { text: "Ты подозреваешь заговор", type: "emotion", difficulty: "hard" },
+                { text: "Ты влюблён и скрываешь это", type: "emotion", difficulty: "normal" },
+                { text: "Тебя всё раздражает, но ты вежлив", type: "emotion", difficulty: "normal" },
+                // --- STATUS ---
+                { text: "Ты считаешь себя главным, даже если это не так", type: "status", difficulty: "normal" },
+                { text: "Ты чувствуешь себя самозванцем", type: "status", difficulty: "normal" },
+                { text: "Ты ведёшь себя “как VIP”", type: "status", difficulty: "normal" },
+                { text: "Ты пытаешься понравиться любой ценой", type: "status", difficulty: "easy" },
+                { text: "Ты торгуешься за каждую мелочь", type: "status", difficulty: "normal" },
+                { text: "Ты действуешь строго по правилам, без исключений", type: "status", difficulty: "hard" },
+                // --- SECRET ---
+                { text: "Ты скрываешь, что ты робот", type: "mission", difficulty: "hard" },
+                { text: "Ты пришёл(шла) получить признание любой ценой", type: "mission", difficulty: "normal" },
+                { text: "Ты пытаешься выведать пароль/код", type: "mission", difficulty: "hard" },
+                { text: "Ты должен(на) заставить другого признаться", type: "mission", difficulty: "normal" },
+                { text: "Ты выполняешь тайную проверку “на честность”", type: "mission", difficulty: "normal" },
+                { text: "Ты подставной человек (актёр), и это нельзя раскрыть", type: "mission", difficulty: "hard" },
+                // --- REALITY ---
+                { text: "В этом мире деньги — комплименты", type: "world", difficulty: "hard" },
+                { text: "В этом мире нельзя лгать (физически)", type: "world", difficulty: "hard" },
+                { text: "Время идёт назад", type: "world", difficulty: "hard" },
+                { text: "Все слышат только “подтекст”, а не слова", type: "world", difficulty: "hard" },
+                { text: "Любое слово становится реальным на 10 секунд", type: "world", difficulty: "hard" },
+                { text: "Невозможно произнести своё имя", type: "world", difficulty: "hard" }
             ]
         };
 
@@ -605,7 +585,7 @@
                 <Header title="Сценарий" onBack={onBack} />
                 
                 <div className="flex-1 overflow-y-auto py-2 space-y-1 no-scrollbar">
-                    <Card title="Локация" content={setup.location} icon={MapPin} colorClass="border-blue-500" onReroll={() => onReroll('location')} />
+                    <Card title="Локация" content={setup.location} icon={MapPin} colorClass="border-blue-500" onReroll={() => onReroll('locations')} />
 
                     <Card title="Персонаж А" content={setup.charA} icon={User} colorClass="border-emerald-500" onReroll={() => onReroll('charA')} />
 
@@ -740,36 +720,73 @@
             const [setup, setSetup] = useState(null);
             const [timeLeft, setTimeLeft] = useState(0);
             const [isRunning, setIsRunning] = useState(false);
-            const [isPremium, setIsPremium] = useState(false);
+            const [usedIndices, setUsedIndices] = useState({
+                locations: [],
+                roles: [],
+                traits: [],
+                goalsSingle: [],
+                goalsPairs: [],
+                goalsShared: [],
+                crazyOptions: []
+            });
 
             const timerRef = useRef(null);
 
-            // Helper: Random item picker
-            const getRandom = (list, diff) => {
-                let pool = list;
-                if (diff === 'easy') {
-                    pool = list.filter(i => i.difficulty === 'easy');
-                } else if (diff === 'normal') {
-                    pool = list.filter(i => i.difficulty !== 'hard');
+            // Helper to get random unique item
+            const getUnique = (key, diff, tempHistory) => {
+                const list = DICTIONARY[key];
+                const currentUsed = tempHistory[key] || [];
+                
+                // Filter candidates
+                let candidates = list.map((item, i) => ({ ...item, originalIndex: i }))
+                    .filter(item => {
+                        if (diff === 'easy') return item.difficulty === 'easy';
+                        if (diff === 'normal') return item.difficulty !== 'hard';
+                        return true;
+                    })
+                    .filter(item => !currentUsed.includes(item.originalIndex));
+
+                // Reset if empty
+                if (candidates.length === 0) {
+                    // Reset history for this key, but keep the one we are about to pick (handled by assigning new array later)
+                    tempHistory[key] = []; 
+                    // Re-filter without history check
+                    candidates = list.map((item, i) => ({ ...item, originalIndex: i }))
+                        .filter(item => {
+                            if (diff === 'easy') return item.difficulty === 'easy';
+                            if (diff === 'normal') return item.difficulty !== 'hard';
+                            return true;
+                        });
                 }
-                const item = pool[Math.floor(Math.random() * pool.length)];
-                return item ? item : null;
+
+                if (candidates.length === 0) return { text: "Нет данных", originalIndex: -1 };
+
+                const pick = candidates[Math.floor(Math.random() * candidates.length)];
+                
+                // Update temporary history
+                if (!tempHistory[key]) tempHistory[key] = [];
+                tempHistory[key].push(pick.originalIndex);
+                
+                return pick;
             };
 
             const getText = (item) => item ? item.text : "Данные не найдены";
 
-            const generateCharacter = () => {
-                const role = getRandom(DICTIONARY.roles, settings.difficulty);
-                const trait = getRandom(DICTIONARY.traits, settings.difficulty);
-                return `${getText(role)} (${getText(trait)})`;
+            const generateCharacter = (diff, tempHistory) => {
+                const role = getUnique('roles', diff, tempHistory);
+                const trait = getUnique('traits', diff, tempHistory);
+                return `${role.text} (${trait.text})`;
             };
 
             // Action: Generate Full Setup
             const generateSetup = () => {
+                // Create a clone of history to mutate during this generation cycle
+                const tempHistory = JSON.parse(JSON.stringify(usedIndices));
+
                 const newSetup = {
-                    location: getText(getRandom(DICTIONARY.locations, settings.difficulty)),
-                    charA: generateCharacter(),
-                    charB: settings.mode === 'duo' ? generateCharacter() : null,
+                    location: getUnique('locations', settings.difficulty, tempHistory).text,
+                    charA: generateCharacter(settings.difficulty, tempHistory),
+                    charB: settings.mode === 'duo' ? generateCharacter(settings.difficulty, tempHistory) : null,
                     crazies: [],
                     mode: settings.mode,
                     goalMode: settings.goalMode
@@ -779,18 +796,19 @@
                 if (settings.mode === 'duo') {
                     if (settings.goalMode === 'dual') {
                         // CONFLICT MODE
-                        const pair = getRandom(DICTIONARY.goalsPairs, settings.difficulty);
-                        if (pair) {
+                        const pair = getUnique('goalsPairs', settings.difficulty, tempHistory);
+                        if (pair.originalIndex !== -1) {
                             newSetup.goalA = pair.a;
                             newSetup.goalB = pair.b;
                         } else {
-                            newSetup.goalA = getText(getRandom(DICTIONARY.goalsSingle, settings.difficulty));
-                            newSetup.goalB = getText(getRandom(DICTIONARY.goalsSingle, settings.difficulty));
+                            // Fallback
+                            newSetup.goalA = getUnique('goalsSingle', settings.difficulty, tempHistory).text;
+                            newSetup.goalB = getUnique('goalsSingle', settings.difficulty, tempHistory).text;
                         }
                     } else {
                         // SHARED MODE
-                        const combo = getRandom(DICTIONARY.goalsShared, settings.difficulty);
-                        if (combo) {
+                        const combo = getUnique('goalsShared', settings.difficulty, tempHistory);
+                        if (combo.originalIndex !== -1) {
                             newSetup.sharedGoal = combo.goal;
                             newSetup.obstacle = combo.obstacle;
                         } else {
@@ -800,16 +818,17 @@
                     }
                 } else {
                     // Solo
-                    newSetup.goal = getText(getRandom(DICTIONARY.goalsSingle, settings.difficulty));
+                    newSetup.goal = getUnique('goalsSingle', settings.difficulty, tempHistory).text;
                 }
 
                 // Crazy Options Logic
                 const count = settings.crazyCount;
                 for (let i = 0; i < count; i++) {
-                    newSetup.crazies.push(getText(getRandom(DICTIONARY.crazyOptions, settings.difficulty)));
+                    newSetup.crazies.push(getUnique('crazyOptions', settings.difficulty, tempHistory).text);
                 }
 
                 setSetup(newSetup);
+                setUsedIndices(tempHistory);
             };
 
             const handleStartGame = () => {
@@ -838,41 +857,95 @@
 
             // Reroll Handlers
             const reroll = (key) => {
+                // Clone history
+                const tempHistory = JSON.parse(JSON.stringify(usedIndices));
+                
                 setSetup(prev => {
                     let newVal;
-                    if (key.includes('char')) {
-                        newVal = generateCharacter();
+                    if (key === 'charA' || key === 'charB') {
+                        newVal = generateCharacter(settings.difficulty, tempHistory);
                     } 
-                    else if (key === 'location') {
-                        newVal = getText(getRandom(DICTIONARY.locations, settings.difficulty));
+                    else if (key === 'locations') { // Note: 'locations' matches DICTIONARY key
+                        newVal = getUnique('locations', settings.difficulty, tempHistory).text;
                     }
                     else if (key === 'goal' || key === 'goalA' || key === 'goalB') {
-                        newVal = getText(getRandom(DICTIONARY.goalsSingle, settings.difficulty));
+                        newVal = getUnique('goalsSingle', settings.difficulty, tempHistory).text;
                     }
                     else if (key === 'sharedGoal') {
-                        const combo = getRandom(DICTIONARY.goalsShared, settings.difficulty);
-                        newVal = combo ? combo.goal : "Цель";
+                        const combo = getUnique('goalsShared', settings.difficulty, tempHistory);
+                        newVal = combo.goal;
+                        // Side-effect: update obstacle too? Usually reroll button is specific. 
+                        // But sharedGoal comes from a pair. If we reroll sharedGoal, we get a new pair.
+                        // Let's assume we reroll the combo.
                     }
                     else if (key === 'obstacle') {
-                        const combo = getRandom(DICTIONARY.goalsShared, settings.difficulty);
-                        newVal = combo ? combo.obstacle : "Препятствие";
+                         // Reroll obstacle independently? Or part of shared?
+                         // If we reroll obstacle, we might want another pair. 
+                         // To keep it simple, let's just pick a random pair and take obstacle.
+                         const combo = getUnique('goalsShared', settings.difficulty, tempHistory);
+                         newVal = combo.obstacle;
                     }
                     
-                    return { ...prev, [key]: newVal };
+                    // Special handling for dual goals logic update (since we pick pairs)
+                    if (key === 'sharedGoal') {
+                         return { ...prev, sharedGoal: newVal, obstacle: getUnique('goalsShared', settings.difficulty, tempHistory).obstacle }; // Actually this logic is flawed because we called getUnique twice.
+                         // Let's simplify reroll for Shared/Obstacle to reroll the whole PAIR if user clicks it
+                    }
+
+                    // Actually, let's stick to simple single replacements where possible
+                    return { ...prev, [key === 'locations' ? 'location' : key]: newVal };
                 });
+                
+                setUsedIndices(tempHistory);
             };
 
+            // Fix reroll for specific complex keys
+            const complexReroll = (key) => {
+                 const tempHistory = JSON.parse(JSON.stringify(usedIndices));
+                 
+                 if (key === 'locations') {
+                     const next = getUnique('locations', settings.difficulty, tempHistory).text;
+                     setSetup(p => ({...p, location: next}));
+                 } else if (key === 'charA') {
+                     const next = generateCharacter(settings.difficulty, tempHistory);
+                     setSetup(p => ({...p, charA: next}));
+                 } else if (key === 'charB') {
+                     const next = generateCharacter(settings.difficulty, tempHistory);
+                     setSetup(p => ({...p, charB: next}));
+                 } else if (key === 'goalA') {
+                     const next = getUnique('goalsSingle', settings.difficulty, tempHistory).text;
+                     setSetup(p => ({...p, goalA: next}));
+                 } else if (key === 'goalB') {
+                     const next = getUnique('goalsSingle', settings.difficulty, tempHistory).text;
+                     setSetup(p => ({...p, goalB: next}));
+                 } else if (key === 'sharedGoal') {
+                     const next = getUnique('goalsShared', settings.difficulty, tempHistory);
+                     setSetup(p => ({...p, sharedGoal: next.goal, obstacle: next.obstacle}));
+                 } else if (key === 'obstacle') {
+                     // Reroll just obstacle? Hard because they are pairs. Let's reroll the pair.
+                     const next = getUnique('goalsShared', settings.difficulty, tempHistory);
+                     setSetup(p => ({...p, sharedGoal: next.goal, obstacle: next.obstacle}));
+                 } else if (key === 'goal') {
+                     const next = getUnique('goalsSingle', settings.difficulty, tempHistory).text;
+                     setSetup(p => ({...p, goal: next}));
+                 }
+
+                 setUsedIndices(tempHistory);
+            }
+
             const rerollCrazy = (index) => {
+                const tempHistory = JSON.parse(JSON.stringify(usedIndices));
                 const newCrazies = [...setup.crazies];
-                newCrazies[index] = getText(getRandom(DICTIONARY.crazyOptions, settings.difficulty));
+                newCrazies[index] = getUnique('crazyOptions', settings.difficulty, tempHistory).text;
                 setSetup(prev => ({ ...prev, crazies: newCrazies }));
+                setUsedIndices(tempHistory);
             };
 
             return (
                 <div className="bg-gray-900 text-gray-100 h-screen w-full font-sans selection:bg-yellow-500/30">
                     {screen === 'onboarding' && <OnboardingScreen onStart={() => setScreen('settings')} />}
                     {screen === 'settings' && <SettingsScreen settings={settings} setSettings={setSettings} onStartGame={handleStartGame} onBack={() => setScreen('onboarding')} />}
-                    {screen === 'generation' && <GenerationScreen setup={setup} settings={settings} onReroll={reroll} onRerollCrazy={rerollCrazy} onGenerateAll={generateSetup} onStartScene={handleStartScene} onBack={() => setScreen('settings')} />}
+                    {screen === 'generation' && <GenerationScreen setup={setup} settings={settings} onReroll={complexReroll} onRerollCrazy={rerollCrazy} onGenerateAll={generateSetup} onStartScene={handleStartScene} onBack={() => setScreen('settings')} />}
                     {screen === 'scene' && <SceneScreen timeLeft={timeLeft} setTimeLeft={setTimeLeft} isRunning={isRunning} setIsRunning={setIsRunning} settings={settings} setup={setup} onBack={() => setScreen('generation')} onRepeat={() => {setTimeLeft(settings.duration); setIsRunning(true);}} onStop={() => setScreen('generation')} />}
                 </div>
             );
