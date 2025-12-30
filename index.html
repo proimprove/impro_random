@@ -67,6 +67,15 @@
         const X = (props) => <IconBase {...props}><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></IconBase>;
         const Star = (props) => <IconBase {...props}><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></IconBase>;
 
+        // --- Helper for Difficulty Mapping ---
+        const mapDiff = (d) => {
+            const val = parseInt(d);
+            if (val === 1) return 'easy';
+            if (val === 2) return 'normal';
+            if (val === 3) return 'hard';
+            return 'normal';
+        };
+
         // --- Data Dictionaries ---
         const DICTIONARY = {
             locations: [
@@ -483,6 +492,12 @@
                                 title="Монолог" 
                                 desc="1 актер. 60 сек." 
                             />
+                            <ModeOption 
+                                active={settings.mode === 'classic'} 
+                                onClick={() => setSettings({...settings, mode: 'classic', duration: 120})}
+                                title="Классика" 
+                                desc="Локация и персонажи. Цель придумываете вы." 
+                            />
                         </div>
                     </Section>
 
@@ -552,6 +567,7 @@
                     </Section>
 
                     {/* Crazy Options Toggle */}
+                    {settings.mode !== 'classic' && (
                     <Section title="Безумные опции">
                         <div className="flex bg-gray-800 p-1 rounded-xl">
                             <button
@@ -572,6 +588,7 @@
                             </button>
                         </div>
                     </Section>
+                    )}
                 </div>
 
                 <Button onClick={onStartGame} size="lg" className="mt-4 shadow-xl">
@@ -585,11 +602,33 @@
                 <Header title="Сценарий" onBack={onBack} />
                 
                 <div className="flex-1 overflow-y-auto py-2 space-y-1 no-scrollbar">
+                    {settings.mode === 'classic' && (
+                        <div className="bg-gray-800/50 p-4 rounded-xl mb-4 border border-gray-700 text-center">
+                            <p className="text-sm text-gray-300 italic leading-relaxed">
+                                Режим «Классика» — это "золотой стандарт" импровизации, где актеры сами создают обстоятельства на основе «кто» и «где».
+                            </p>
+                        </div>
+                    )}
+                    {settings.mode === 'duo' && (
+                        <div className="bg-gray-800/50 p-4 rounded-xl mb-4 border border-gray-700 text-center">
+                            <p className="text-sm text-gray-300 italic leading-relaxed">
+                                Режим «Сцена вдвоем» — это полноценная история. Используйте цели как двигатель сюжета: вступайте в конфликт или решайте общую проблему.
+                            </p>
+                        </div>
+                    )}
+                    {settings.mode === 'solo' && (
+                        <div className="bg-gray-800/50 p-4 rounded-xl mb-4 border border-gray-700 text-center">
+                            <p className="text-sm text-gray-300 italic leading-relaxed">
+                                Режим «Монолог» — это этюд для одного. Ваш персонаж здесь и сейчас. Цель задает вектор, остальное — ваша игра.
+                            </p>
+                        </div>
+                    )}
+
                     <Card title="Локация" content={setup.location} icon={MapPin} colorClass="border-blue-500" onReroll={() => onReroll('locations')} />
 
                     <Card title="Персонаж А" content={setup.charA} icon={User} colorClass="border-emerald-500" onReroll={() => onReroll('charA')} />
 
-                    {settings.mode === 'duo' && (
+                    {(settings.mode === 'duo' || settings.mode === 'classic') && (
                         <Card title="Персонаж Б" content={setup.charB} icon={User} colorClass="border-emerald-500" onReroll={() => onReroll('charB')} />
                     )}
 
@@ -607,7 +646,7 @@
                         </React.Fragment>
                     )}
 
-                    {settings.mode !== 'duo' && (
+                    {settings.mode !== 'duo' && settings.mode !== 'classic' && (
                         <Card title="Цель" content={setup.goal} icon={Target} colorClass="border-orange-500" onReroll={() => onReroll('goal')} />
                     )}
 
@@ -674,7 +713,7 @@
                                 </React.Fragment>
                             )}
 
-                            {setup.mode !== 'duo' && setup.goal && <CompactItem icon={Target} text={setup.goal} color="text-orange-400" />}
+                            {setup.mode !== 'duo' && setup.mode !== 'classic' && setup.goal && <CompactItem icon={Target} text={setup.goal} color="text-orange-400" />}
 
                             {setup.crazies.map((c, i) => (
                                 <CompactItem key={i} icon={Zap} text={c} color="text-purple-400" />
@@ -772,8 +811,9 @@
 
             const getText = (item) => item ? item.text : "Данные не найдены";
 
-            const generateCharacter = (diff, tempHistory) => {
+            const generateCharacter = (diff, tempHistory, includeTrait = true) => {
                 const role = getUnique('roles', diff, tempHistory);
+                if (!includeTrait) return role.text;
                 const trait = getUnique('traits', diff, tempHistory);
                 return `${role.text} (${trait.text})`;
             };
@@ -782,11 +822,12 @@
             const generateSetup = () => {
                 // Create a clone of history to mutate during this generation cycle
                 const tempHistory = JSON.parse(JSON.stringify(usedIndices));
+                const isClassic = settings.mode === 'classic';
 
                 const newSetup = {
                     location: getUnique('locations', settings.difficulty, tempHistory).text,
-                    charA: generateCharacter(settings.difficulty, tempHistory),
-                    charB: settings.mode === 'duo' ? generateCharacter(settings.difficulty, tempHistory) : null,
+                    charA: generateCharacter(settings.difficulty, tempHistory, !isClassic),
+                    charB: (settings.mode === 'duo' || isClassic) ? generateCharacter(settings.difficulty, tempHistory, !isClassic) : null,
                     crazies: [],
                     mode: settings.mode,
                     goalMode: settings.goalMode
@@ -816,15 +857,18 @@
                             newSetup.obstacle = "Что-то пошло не так";
                         }
                     }
-                } else {
+                } else if (settings.mode === 'solo') {
                     // Solo
                     newSetup.goal = getUnique('goalsSingle', settings.difficulty, tempHistory).text;
                 }
+                // Classic mode: No goals generated
 
                 // Crazy Options Logic
-                const count = settings.crazyCount;
-                for (let i = 0; i < count; i++) {
-                    newSetup.crazies.push(getUnique('crazyOptions', settings.difficulty, tempHistory).text);
+                if (settings.mode !== 'classic') {
+                    const count = settings.crazyCount;
+                    for (let i = 0; i < count; i++) {
+                        newSetup.crazies.push(getUnique('crazyOptions', settings.difficulty, tempHistory).text);
+                    }
                 }
 
                 setSetup(newSetup);
@@ -859,11 +903,12 @@
             const reroll = (key) => {
                 // Clone history
                 const tempHistory = JSON.parse(JSON.stringify(usedIndices));
+                const isClassic = settings.mode === 'classic';
                 
                 setSetup(prev => {
                     let newVal;
                     if (key === 'charA' || key === 'charB') {
-                        newVal = generateCharacter(settings.difficulty, tempHistory);
+                        newVal = generateCharacter(settings.difficulty, tempHistory, !isClassic);
                     } 
                     else if (key === 'locations') { // Note: 'locations' matches DICTIONARY key
                         newVal = getUnique('locations', settings.difficulty, tempHistory).text;
@@ -874,25 +919,17 @@
                     else if (key === 'sharedGoal') {
                         const combo = getUnique('goalsShared', settings.difficulty, tempHistory);
                         newVal = combo.goal;
-                        // Side-effect: update obstacle too? Usually reroll button is specific. 
-                        // But sharedGoal comes from a pair. If we reroll sharedGoal, we get a new pair.
-                        // Let's assume we reroll the combo.
                     }
                     else if (key === 'obstacle') {
-                         // Reroll obstacle independently? Or part of shared?
-                         // If we reroll obstacle, we might want another pair. 
-                         // To keep it simple, let's just pick a random pair and take obstacle.
                          const combo = getUnique('goalsShared', settings.difficulty, tempHistory);
                          newVal = combo.obstacle;
                     }
                     
                     // Special handling for dual goals logic update (since we pick pairs)
                     if (key === 'sharedGoal') {
-                         return { ...prev, sharedGoal: newVal, obstacle: getUnique('goalsShared', settings.difficulty, tempHistory).obstacle }; // Actually this logic is flawed because we called getUnique twice.
-                         // Let's simplify reroll for Shared/Obstacle to reroll the whole PAIR if user clicks it
+                         return { ...prev, sharedGoal: newVal, obstacle: getUnique('goalsShared', settings.difficulty, tempHistory).obstacle }; 
                     }
 
-                    // Actually, let's stick to simple single replacements where possible
                     return { ...prev, [key === 'locations' ? 'location' : key]: newVal };
                 });
                 
@@ -902,15 +939,16 @@
             // Fix reroll for specific complex keys
             const complexReroll = (key) => {
                  const tempHistory = JSON.parse(JSON.stringify(usedIndices));
+                 const isClassic = settings.mode === 'classic';
                  
                  if (key === 'locations') {
                      const next = getUnique('locations', settings.difficulty, tempHistory).text;
                      setSetup(p => ({...p, location: next}));
                  } else if (key === 'charA') {
-                     const next = generateCharacter(settings.difficulty, tempHistory);
+                     const next = generateCharacter(settings.difficulty, tempHistory, !isClassic);
                      setSetup(p => ({...p, charA: next}));
                  } else if (key === 'charB') {
-                     const next = generateCharacter(settings.difficulty, tempHistory);
+                     const next = generateCharacter(settings.difficulty, tempHistory, !isClassic);
                      setSetup(p => ({...p, charB: next}));
                  } else if (key === 'goalA') {
                      const next = getUnique('goalsSingle', settings.difficulty, tempHistory).text;
